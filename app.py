@@ -8,6 +8,8 @@ import fastf1
 import warnings
 warnings.filterwarnings('ignore')
 
+import os
+os.makedirs('f1_cache', exist_ok=True)
 fastf1.Cache.enable_cache('f1_cache')
 
 # ─────────────────────────────────────────
