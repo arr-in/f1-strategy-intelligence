@@ -24,8 +24,18 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────
-# DRIVER NAMES
+# CONSTANTS
 # ─────────────────────────────────────────
+AVAILABLE_RACES = {
+    2022: ['Bahrain', 'Saudi Arabia', 'Australia', 'Spain', 'Monaco',
+           'Britain', 'Hungary', 'Belgium', 'Italy'],
+    2023: ['Bahrain', 'Saudi Arabia', 'Australia', 'Spain', 'Monaco',
+           'Britain', 'Hungary', 'Italy', 'Singapore'],
+    2024: ['Bahrain', 'Saudi Arabia', 'Australia', 'Spain', 'Monaco',
+           'Britain', 'Hungary', 'Italy', 'Singapore'],
+    2026: ['Australia', 'China', 'Japan'],
+}
+
 DRIVER_NAMES = {
     'VER': 'Max Verstappen', 'LEC': 'Charles Leclerc',
     'RUS': 'George Russell', 'SAI': 'Carlos Sainz',
@@ -40,256 +50,424 @@ DRIVER_NAMES = {
     'ANT': 'Kimi Antonelli', 'LAW': 'Liam Lawson',
     'HAD': 'Isack Hadjar', 'BEA': 'Oliver Bearman',
     'BOR': 'Gabriel Bortoleto', 'COL': 'Franco Colapinto',
-    'LIN': 'Jack Doohan', 'DOO': 'Jack Doohan',
-    'SAR': 'Logan Sargeant', 'HUL': 'Nico Hulkenberg',
+    'DOO': 'Jack Doohan', 'LIN': 'Jack Doohan',
 }
 
-# ─────────────────────────────────────────
-# TEAM COLORS
-# ─────────────────────────────────────────
 TEAM_COLORS = {
-    'Red Bull Racing': '#3671C6',
-    'Ferrari': '#E8002D',
-    'Mercedes': '#27F4D2',
-    'McLaren': '#FF8000',
-    'Aston Martin': '#229971',
-    'Alpine': '#FF87BC',
-    'Williams': '#64C4FF',
-    'AlphaTauri': '#6692FF',
-    'RB': '#6692FF',
-    'Racing Bulls': '#6692FF',
-    'Alfa Romeo': '#C92D4B',
-    'Kick Sauber': '#52E252',
-    'Haas F1 Team': '#B6BABD',
-    'Cadillac': '#CC0000',
+    'Red Bull Racing': '#3671C6', 'Ferrari': '#E8002D',
+    'Mercedes': '#27F4D2', 'McLaren': '#FF8000',
+    'Aston Martin': '#229971', 'Alpine': '#FF87BC',
+    'Williams': '#64C4FF', 'AlphaTauri': '#6692FF',
+    'RB': '#6692FF', 'Racing Bulls': '#6692FF',
+    'Alfa Romeo': '#C92D4B', 'Kick Sauber': '#52E252',
+    'Haas F1 Team': '#B6BABD', 'Cadillac': '#CC0000',
     'Audi': '#F50000',
 }
 
 # ─────────────────────────────────────────
-# UPCOMING RACES 2026
+# RACE SCHEDULE — auto from FastF1
 # ─────────────────────────────────────────
-UPCOMING_RACES = [
-    {'name': 'Miami Grand Prix', 'circuit': 'Miami', 'date': datetime(2026, 5, 3, 14, 0, tzinfo=timezone.utc)},
-    {'name': 'Emilia Romagna Grand Prix', 'circuit': 'Imola', 'date': datetime(2026, 5, 17, 13, 0, tzinfo=timezone.utc)},
-    {'name': 'Monaco Grand Prix', 'circuit': 'Monaco', 'date': datetime(2026, 5, 24, 13, 0, tzinfo=timezone.utc)},
-    {'name': 'Spanish Grand Prix', 'circuit': 'Barcelona', 'date': datetime(2026, 6, 1, 13, 0, tzinfo=timezone.utc)},
-    {'name': 'Canadian Grand Prix', 'circuit': 'Montreal', 'date': datetime(2026, 6, 15, 14, 0, tzinfo=timezone.utc)},
-    {'name': 'Austrian Grand Prix', 'circuit': 'Spielberg', 'date': datetime(2026, 6, 29, 13, 0, tzinfo=timezone.utc)},
-    {'name': 'British Grand Prix', 'circuit': 'Silverstone', 'date': datetime(2026, 7, 6, 14, 0, tzinfo=timezone.utc)},
-]
-
-def get_next_race():
-    now = datetime.now(timezone.utc)
-    future = [r for r in UPCOMING_RACES if r['date'] > now]
-    return future[0] if future else None
-
-def format_countdown(race):
-    now = datetime.now(timezone.utc)
-    delta = race['date'] - now
-    days = delta.days
-    hours, rem = divmod(delta.seconds, 3600)
-    minutes = rem // 60
-    return days, hours, minutes
+@st.cache_data(ttl=3600)
+def get_race_schedule():
+    try:
+        schedule = fastf1.get_event_schedule(2026, include_testing=False)
+        now = datetime.now(timezone.utc)
+        races = []
+        for _, row in schedule.iterrows():
+            race_date = pd.to_datetime(row['Session5Date']).to_pydatetime()
+            if race_date.tzinfo is None:
+                race_date = race_date.replace(tzinfo=timezone.utc)
+            races.append({
+                'name': row['EventName'],
+                'date': race_date,
+                'round': int(row['RoundNumber'])
+            })
+        future = [r for r in races if r['date'] > now]
+        return future[0] if future else None
+    except Exception:
+        return None
 
 # ─────────────────────────────────────────
-# CUSTOM CSS
+# CSS
 # ─────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');
 
-html, body, [class*="css"] {
+*, html, body, [class*="css"] {
     font-family: 'DM Mono', monospace !important;
-    background-color: #080808 !important;
-    color: #dddddd !important;
 }
 
 .stApp {
-    background-color: #080808 !important;
+    background-color: #060606 !important;
     background-image:
-        repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 2px,
-            rgba(255,255,255,0.012) 2px,
-            rgba(255,255,255,0.012) 4px
-        ),
-        repeating-linear-gradient(
-            -45deg,
-            transparent,
-            transparent 2px,
-            rgba(255,255,255,0.008) 2px,
-            rgba(255,255,255,0.008) 4px
-        );
+        linear-gradient(rgba(226,75,74,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(226,75,74,0.03) 1px, transparent 1px),
+        radial-gradient(ellipse at 20% 50%, rgba(226,75,74,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(54,113,198,0.04) 0%, transparent 60%);
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
 }
 
 .main .block-container {
-    padding: 2rem 2.5rem !important;
+    padding: 1.5rem 2rem 3rem !important;
     max-width: 1400px !important;
 }
 
+/* Sidebar */
 [data-testid="stSidebar"] {
-    background-color: #0a0a0a !important;
-    border-right: 1px solid #1a1a1a !important;
-    background-image:
-        repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 2px,
-            rgba(255,255,255,0.015) 2px,
-            rgba(255,255,255,0.015) 4px
-        );
+    background: linear-gradient(180deg, #0a0a0a 0%, #080808 100%) !important;
+    border-right: 1px solid #151515 !important;
+    min-width: 260px !important;
 }
-[data-testid="stSidebar"] * { color: #cccccc !important; }
+[data-testid="stSidebar"] > div {
+    padding: 0 !important;
+}
 
+/* Typography */
 h1 {
     font-family: 'Bebas Neue', monospace !important;
-    font-size: 3rem !important;
-    letter-spacing: 0.08em !important;
+    font-size: 3.2rem !important;
+    letter-spacing: 0.06em !important;
     color: #ffffff !important;
-    line-height: 1 !important;
+    line-height: 0.95 !important;
+    margin-bottom: 0.25rem !important;
 }
 h2 {
     font-family: 'Bebas Neue', monospace !important;
-    font-size: 1.8rem !important;
-    letter-spacing: 0.06em !important;
+    font-size: 1.6rem !important;
+    letter-spacing: 0.08em !important;
     color: #ffffff !important;
 }
 h3 {
-    font-size: 0.75rem !important;
-    letter-spacing: 0.15em !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.2em !important;
     text-transform: uppercase !important;
-    color: #444444 !important;
-    font-weight: 500 !important;
+    color: #2a2a2a !important;
+    margin-bottom: 0.75rem !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 1px solid #111 !important;
 }
 
+/* Metrics */
 [data-testid="metric-container"] {
-    background: #0d0d0d !important;
-    border: 1px solid #1a1a1a !important;
-    border-radius: 6px !important;
-    padding: 1rem 1.2rem !important;
+    background: #0a0a0a !important;
+    border: 1px solid #141414 !important;
+    border-top: 2px solid #1a1a1a !important;
+    border-radius: 4px !important;
+    padding: 1rem 1.25rem !important;
+}
+[data-testid="metric-container"]:hover {
+    border-top-color: #E24B4A !important;
+    transition: border-color 0.3s !important;
 }
 [data-testid="metric-container"] label {
-    color: #444 !important;
-    font-size: 0.7rem !important;
-    letter-spacing: 0.12em !important;
+    color: #333 !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.15em !important;
     text-transform: uppercase !important;
 }
-[data-testid="metric-container"] [data-testid="stMetricValue"] {
+[data-testid="stMetricValue"] {
     color: #ffffff !important;
-    font-size: 1.6rem !important;
+    font-size: 1.4rem !important;
+    font-weight: 400 !important;
 }
 
+/* Inputs */
 .stSelectbox > div > div {
-    background: #0d0d0d !important;
-    border: 1px solid #1e1e1e !important;
-    border-radius: 6px !important;
-    color: #ddd !important;
+    background: #0a0a0a !important;
+    border: 1px solid #1a1a1a !important;
+    border-radius: 4px !important;
+    color: #ccc !important;
+    font-size: 0.85rem !important;
+}
+.stSelectbox label {
+    color: #333 !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
 }
 .stSlider > div > div > div { background: #E24B4A !important; }
+.stSlider label {
+    color: #333 !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+}
 
+/* Buttons */
 .stButton > button {
     background: transparent !important;
     border: 1px solid #E24B4A !important;
     color: #E24B4A !important;
-    border-radius: 4px !important;
+    border-radius: 3px !important;
     font-family: 'DM Mono', monospace !important;
-    letter-spacing: 0.08em !important;
-    font-size: 0.8rem !important;
-    transition: all 0.2s !important;
-    padding: 0.5rem 1.2rem !important;
+    letter-spacing: 0.12em !important;
+    font-size: 0.72rem !important;
+    padding: 0.6rem 1.4rem !important;
+    text-transform: uppercase !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
 }
 .stButton > button:hover {
     background: #E24B4A !important;
-    color: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 500 !important;
 }
 
+/* Tabs */
 .stTabs [data-baseweb="tab-list"] {
     background: transparent !important;
-    border-bottom: 1px solid #1a1a1a !important;
+    border-bottom: 1px solid #111 !important;
     gap: 0 !important;
 }
 .stTabs [data-baseweb="tab"] {
     background: transparent !important;
-    color: #444 !important;
+    color: #2a2a2a !important;
     border: none !important;
     font-family: 'DM Mono', monospace !important;
-    letter-spacing: 0.1em !important;
-    font-size: 0.75rem !important;
-    padding: 0.75rem 1.5rem !important;
+    letter-spacing: 0.12em !important;
+    font-size: 0.7rem !important;
+    padding: 0.8rem 1.5rem !important;
     text-transform: uppercase !important;
 }
 .stTabs [aria-selected="true"] {
-    background: transparent !important;
     color: #ffffff !important;
     border-bottom: 2px solid #E24B4A !important;
 }
 
-.stRadio > div { gap: 0.5rem !important; }
-.stRadio label {
-    font-size: 0.8rem !important;
-    letter-spacing: 0.05em !important;
-    color: #888 !important;
-}
+/* Radio */
+.stRadio label { color: #666 !important; font-size: 0.8rem !important; }
+.stRadio [data-testid="stMarkdownContainer"] p { color: #888 !important; }
 
-hr { border-color: #1a1a1a !important; }
+/* Alerts */
+.stAlert { border-radius: 3px !important; font-size: 0.8rem !important; }
 
-#MainMenu { visibility: hidden; }
-footer { visibility: hidden; }
-header { visibility: hidden; }
+#MainMenu, footer, header { visibility: hidden; }
 
-.countdown-box {
-    background: #0d0d0d;
-    border: 1px solid #1a1a1a;
-    border-top: 2px solid #E24B4A;
-    border-radius: 6px;
-    padding: 1rem;
-    text-align: center;
-    margin: 0.5rem 0;
-}
-.countdown-num {
+/* Custom components */
+.f1-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #E24B4A;
+    color: #000;
     font-family: 'Bebas Neue', monospace;
-    font-size: 2rem;
-    color: #E24B4A;
-    line-height: 1;
+    font-size: 1.1rem;
+    padding: 3px 10px 2px;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+    margin-right: 10px;
 }
-.countdown-label {
+.sidebar-title {
+    font-family: 'Bebas Neue', monospace;
+    font-size: 1.2rem;
+    color: #fff;
+    letter-spacing: 0.12em;
+}
+.sidebar-sub {
     font-size: 0.6rem;
-    color: #444;
-    letter-spacing: 0.15em;
+    color: #2a2a2a;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
     margin-top: 2px;
 }
-.race-name {
-    font-family: 'Bebas Neue', monospace;
-    font-size: 1rem;
-    color: #ffffff;
-    letter-spacing: 0.1em;
-    text-align: center;
-    margin-bottom: 0.5rem;
-}
-.red-line {
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #E24B4A, transparent);
-    margin: 1rem 0;
+.red-rule {
+    height: 1px;
+    background: linear-gradient(90deg, #E24B4A 0%, rgba(226,75,74,0.3) 60%, transparent 100%);
     border: none;
+    margin: 1rem 0;
 }
-.section-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.2em;
+.dim-rule {
+    height: 1px;
+    background: #111;
+    border: none;
+    margin: 1rem 0;
+}
+.section-eyebrow {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
-    color: #333;
+    color: #2a2a2a;
     margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid #111;
 }
-.footer-text {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: #2a2a2a;
+.countdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: 8px;
+}
+.countdown-cell {
+    background: #0d0d0d;
+    border: 1px solid #141414;
+    border-top: 2px solid #E24B4A;
+    border-radius: 3px;
+    padding: 10px 6px 8px;
     text-align: center;
-    padding: 1rem 0;
+}
+.countdown-num {
+    font-family: 'Bebas Neue', monospace;
+    font-size: 2.2rem;
+    color: #E24B4A;
+    line-height: 1;
+    display: block;
+}
+.countdown-lbl {
+    font-size: 0.55rem;
+    color: #2a2a2a;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 3px;
+}
+.race-label {
+    font-family: 'Bebas Neue', monospace;
+    font-size: 0.95rem;
+    color: #888;
+    letter-spacing: 0.12em;
+    text-align: center;
+    margin-bottom: 4px;
+}
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    font-size: 0.75rem;
     letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #444;
+}
+.nav-item:hover { color: #888; border-left-color: #333; }
+.nav-item.active { color: #fff; border-left-color: #E24B4A; }
+.coverage-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.7rem;
+    color: #2a2a2a;
+    letter-spacing: 0.05em;
+}
+.coverage-dot {
+    width: 4px;
+    height: 4px;
+    background: #E24B4A;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.page-header {
+    margin-bottom: 1.5rem;
+}
+.page-title {
+    font-family: 'Bebas Neue', monospace;
+    font-size: 3rem;
+    color: #fff;
+    letter-spacing: 0.06em;
+    line-height: 0.9;
+    margin-bottom: 4px;
+}
+.page-subtitle {
+    font-size: 0.7rem;
+    color: #2a2a2a;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+.driver-card {
+    background: #0a0a0a;
+    border: 1px solid #141414;
+    border-radius: 4px;
+    padding: 1.25rem;
+    height: 100%;
+}
+.driver-card-name {
+    font-family: 'Bebas Neue', monospace;
+    font-size: 1.4rem;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+.driver-card-team {
+    font-size: 0.65rem;
+    color: #333;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #0f0f0f;
+    font-size: 0.72rem;
+}
+.stat-label { color: #2a2a2a; letter-spacing: 0.1em; text-transform: uppercase; }
+.stat-value { color: #888; }
+.decision-box {
+    background: #0a0a0a;
+    border: 1px solid #141414;
+    border-radius: 4px;
+    padding: 2rem;
+    text-align: center;
+}
+.decision-label {
+    font-size: 0.6rem;
+    color: #2a2a2a;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+.decision-text {
+    font-family: 'Bebas Neue', monospace;
+    font-size: 3.5rem;
+    letter-spacing: 0.1em;
+    line-height: 1;
+}
+.decision-conf {
+    font-size: 0.7rem;
+    color: #333;
+    letter-spacing: 0.15em;
+    margin-top: 12px;
+}
+.analysis-box {
+    background: #0a0a0a;
+    border: 1px solid #141414;
+    border-radius: 4px;
+    padding: 1.25rem;
+    height: 100%;
+}
+.footer-wrap {
+    margin-top: 4rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid #0f0f0f;
+    text-align: center;
+}
+.footer-main {
+    font-family: 'Bebas Neue', monospace;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    letter-spacing: 0.2em;
+    margin-bottom: 4px;
+}
+.footer-sub {
+    font-size: 0.65rem;
+    color: #151515;
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+}
+.footer-heart {
+    color: #E24B4A;
+    font-size: 14px;
+}
+.footer-by {
+    font-size: 0.65rem;
+    color: #1f1f1f;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -316,158 +494,143 @@ clean_laps, optimal_pit, driver_dna = load_data()
 strategy_model, dna_kmeans, dna_scaler, dna_pca = load_models()
 
 # ─────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────
+def hex_to_rgba(h, a=0.2):
+    h = h.lstrip('#')
+    r, g, b = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+    return f'rgba({r},{g},{b},{a})'
+
+PLOT_BASE = dict(
+    plot_bgcolor='#080808',
+    paper_bgcolor='#080808',
+    font=dict(color='#ffffff', family='monospace', size=11),
+    hoverlabel=dict(bgcolor='#0f0f0f', bordercolor='#222',
+                    font=dict(color='#fff', size=11, family='monospace')),
+    legend=dict(bgcolor='rgba(8,8,8,0.95)', bordercolor='#1a1a1a',
+                borderwidth=1, font=dict(color='#888', size=10, family='monospace')),
+    margin=dict(t=50, b=45, l=55, r=20),
+)
+
+def ax(title=''):
+    return dict(title=title, gridcolor='#0f0f0f', zerolinecolor='#151515',
+                tickfont=dict(color='#2a2a2a', size=9),
+                title_font=dict(color='#333', size=10, family='monospace'))
+
+# ─────────────────────────────────────────
 # SIDEBAR
 # ─────────────────────────────────────────
 with st.sidebar:
-    # F1 Logo + Title
+    # Logo
     st.markdown("""
-    <div style='padding: 1rem 0 0.5rem 0'>
-        <div style='display:flex; align-items:center; gap:10px; margin-bottom:4px'>
-            <div style='
-                background: #E24B4A;
-                color: white;
-                font-family: Bebas Neue, monospace;
-                font-size: 1.4rem;
-                padding: 4px 10px;
-                letter-spacing: 0.05em;
-                border-radius: 3px;
-                line-height: 1;
-            '>F1</div>
+    <div style="padding: 1.5rem 1.25rem 0">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px">
+            <div class="f1-badge">F1</div>
             <div>
-                <div style='font-family: Bebas Neue, monospace; font-size: 1.3rem;
-                            color: #fff; letter-spacing: 0.1em; line-height:1'>STRATEGY</div>
-                <div style='font-size: 0.6rem; color: #444; letter-spacing: 0.2em;
-                            text-transform: uppercase'>INTELLIGENCE SYSTEM</div>
+                <div class="sidebar-title">STRATEGY</div>
+                <div class="sidebar-sub">Intelligence System</div>
             </div>
         </div>
-        <div style='height:1px; background:linear-gradient(90deg,#E24B4A,transparent);
-                    margin: 0.75rem 0'></div>
+        <div class="red-rule"></div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Upcoming race countdown
-    next_race = get_next_race()
+    # Countdown
+    next_race = get_race_schedule()
     if next_race:
-        days, hours, minutes = format_countdown(next_race)
+        now = datetime.now(timezone.utc)
+        delta = next_race['date'] - now
+        days = max(0, delta.days)
+        hours = max(0, delta.seconds // 3600)
+        minutes = max(0, (delta.seconds % 3600) // 60)
         st.markdown(f"""
-        <div style='margin-bottom: 0.5rem'>
-            <div class='section-label'>NEXT RACE</div>
-            <div class='race-name'>{next_race['name'].upper()}</div>
-            <div style='display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px'>
-                <div class='countdown-box'>
-                    <div class='countdown-num'>{days:02d}</div>
-                    <div class='countdown-label'>DAYS</div>
+        <div style="padding: 0 1.25rem">
+            <div class="section-eyebrow">NEXT RACE · RD {next_race['round']}</div>
+            <div class="race-label">{next_race['name'].upper()}</div>
+            <div class="countdown-grid">
+                <div class="countdown-cell">
+                    <span class="countdown-num">{days:02d}</span>
+                    <span class="countdown-lbl">DAYS</span>
                 </div>
-                <div class='countdown-box'>
-                    <div class='countdown-num'>{hours:02d}</div>
-                    <div class='countdown-label'>HRS</div>
+                <div class="countdown-cell">
+                    <span class="countdown-num">{hours:02d}</span>
+                    <span class="countdown-lbl">HRS</span>
                 </div>
-                <div class='countdown-box'>
-                    <div class='countdown-num'>{minutes:02d}</div>
-                    <div class='countdown-label'>MIN</div>
+                <div class="countdown-cell">
+                    <span class="countdown-num">{minutes:02d}</span>
+                    <span class="countdown-lbl">MIN</span>
                 </div>
             </div>
+            <div class="dim-rule" style="margin: 1rem 0"></div>
         </div>
-        <div style='height:1px; background:linear-gradient(90deg,#E24B4A,transparent);
-                    margin: 0.75rem 0'></div>
         """, unsafe_allow_html=True)
 
     # Navigation
-    st.markdown('<div class="section-label">NAVIGATION</div>', unsafe_allow_html=True)
-    page = st.radio(
-        "",
-        ["🏁  Race Strategy", "🧬  Driver DNA", "🔮  Strategy Simulator"],
-        label_visibility="collapsed"
-    )
+    st.markdown('<div style="padding: 0 1.25rem"><div class="section-eyebrow">NAVIGATION</div></div>',
+                unsafe_allow_html=True)
+    page = st.radio("", ["🏁  Race Strategy", "🧬  Driver DNA", "🔮  Strategy Simulator"],
+                    label_visibility="collapsed")
 
     st.markdown("""
-    <div style='height:1px; background:linear-gradient(90deg,#E24B4A,transparent);
-                margin: 0.75rem 0'></div>
-    """, unsafe_allow_html=True)
-
-    # Data coverage
-    st.markdown('<div class="section-label">DATA COVERAGE</div>', unsafe_allow_html=True)
-    st.markdown("""
-    <div style='font-size:11px; color:#3a3a3a; line-height:2.2; font-family:monospace'>
-    <span style='color:#E24B4A'>▸</span> Seasons: 2022 · 2023 · 2024 · 2026<br>
-    <span style='color:#E24B4A'>▸</span> Circuits: 27 Grand Prix<br>
-    <span style='color:#E24B4A'>▸</span> Drivers: 34 profiles<br>
-    <span style='color:#E24B4A'>▸</span> Laps analyzed: 32,572<br>
-    <span style='color:#E24B4A'>▸</span> ML models: 3 trained
+    <div style="padding: 0 1.25rem">
+        <div class="dim-rule"></div>
+        <div class="section-eyebrow">DATA COVERAGE</div>
     </div>
     """, unsafe_allow_html=True)
+
+    for item in [
+        "Seasons: 2022 · 2023 · 2024 · 2026",
+        "Circuits: 27 Grand Prix",
+        "Drivers: 34 profiles",
+        "Laps: 32,572 analyzed",
+        "Models: 3 ML trained",
+    ]:
+        st.markdown(f"""
+        <div style="padding: 0 1.25rem">
+            <div class="coverage-item">
+                <div class="coverage-dot"></div>
+                <span>{item}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Footer
     st.markdown("""
-    <div style='position:absolute; bottom:1rem; left:0; right:0; padding: 0 1rem'>
-        <div style='height:1px; background:linear-gradient(90deg,transparent,#1a1a1a,transparent);
-                    margin-bottom:0.75rem'></div>
-        <div style='font-size:10px; color:#2a2a2a; text-align:center;
-                    font-family:monospace; letter-spacing:0.1em; line-height:1.8'>
-            Made with ♥ by Arin<br>
-            <span style='color:#1a1a1a'>FastF1 · scikit-learn · Streamlit</span>
+    <div style="padding: 1.5rem 1.25rem; margin-top: 2rem; border-top: 1px solid #0f0f0f">
+        <div style="text-align:center">
+            <div style="font-size:10px; color:#1a1a1a; letter-spacing:0.15em; line-height:2">
+                FastF1 · scikit-learn · Streamlit<br>
+                <span style="color:#E24B4A">♥</span>
+                <span style="color:#1f1f1f; letter-spacing:0.2em"> MADE BY ARIN</span>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-# ─────────────────────────────────────────
-# PLOTLY THEME
-# ─────────────────────────────────────────
-PLOT_LAYOUT = dict(
-    plot_bgcolor='#0a0a0a',
-    paper_bgcolor='#0a0a0a',
-    font=dict(color='#ffffff', family='monospace'),
-    margin=dict(t=60, b=50, l=60, r=20),
-    hoverlabel=dict(
-        bgcolor='#111111',
-        bordercolor='#333333',
-        font=dict(color='#ffffff', size=12, family='monospace')
-    ),
-    legend=dict(
-        bgcolor='rgba(10,10,10,0.95)',
-        bordercolor='#1e1e1e',
-        borderwidth=1,
-        font=dict(color='#aaaaaa', size=11, family='monospace')
-    )
-)
-
-def styled_axis(title=''):
-    return dict(
-        title=title,
-        gridcolor='#111111',
-        zerolinecolor='#1e1e1e',
-        tickfont=dict(color='#333', size=10),
-        title_font=dict(color='#444', size=11, family='monospace')
-    )
-
-def hex_to_rgba(hex_color, alpha=0.2):
-    h = hex_color.lstrip('#')
-    r, g, b = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-    return f'rgba({r},{g},{b},{alpha})'
 
 # ─────────────────────────────────────────
 # PAGE 1 — RACE STRATEGY
 # ─────────────────────────────────────────
 if "Race Strategy" in page:
-    st.markdown("# RACE STRATEGY")
-    st.markdown("### Command Center · ML-powered pit window optimization")
-    st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="page-header">
+        <div class="page-title">RACE STRATEGY</div>
+        <div class="page-subtitle">Command Center · ML-powered pit window optimization · 32,572 laps analyzed</div>
+    </div>
+    <div class="red-rule"></div>
+    """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        selected_race = st.selectbox(
-            "GRAND PRIX",
-            sorted(clean_laps['race_name'].unique()),
-        )
-    with col2:
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        selected_race = st.selectbox("GRAND PRIX", sorted(clean_laps['race_name'].unique()))
+    with c2:
         race_drivers = sorted(clean_laps[clean_laps['race_name'] == selected_race]['Driver'].unique())
-        driver_options = {f"{DRIVER_NAMES.get(d, d)} ({d})": d for d in race_drivers}
-        selected_display = st.selectbox("DRIVER", list(driver_options.keys()))
-        selected_driver = driver_options[selected_display]
-    with col3:
+        driver_opts = {f"{DRIVER_NAMES.get(d, d)} ({d})": d for d in race_drivers}
+        sel_disp = st.selectbox("DRIVER", list(driver_opts.keys()))
+        selected_driver = driver_opts[sel_disp]
+    with c3:
         selected_compound = st.selectbox("COMPOUND", ['SOFT', 'MEDIUM', 'HARD'], index=1)
 
-    st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="red-rule"></div>', unsafe_allow_html=True)
 
     driver_laps = clean_laps[
         (clean_laps['race_name'] == selected_race) &
@@ -476,583 +639,466 @@ if "Race Strategy" in page:
 
     if not driver_laps.empty:
         team = driver_laps['Team'].iloc[0] if 'Team' in driver_laps.columns else 'Unknown'
-        team_color = TEAM_COLORS.get(team, '#E24B4A')
-        best_lap = driver_laps['LapTimeSec'].min()
-        mins = int(best_lap // 60)
-        secs = best_lap % 60
+        tc = TEAM_COLORS.get(team, '#E24B4A')
+        best = driver_laps['LapTimeSec'].min()
+        m, s = int(best // 60), best % 60
         avg_deg = driver_laps['DeltaFromFastest'].mean()
 
         m1, m2, m3, m4 = st.columns(4)
-        with m1:
-            st.metric("TOTAL LAPS", int(driver_laps['LapNumber'].max()))
-        with m2:
-            st.metric("FASTEST LAP", f"{mins}:{secs:06.3f}")
-        with m3:
-            st.metric("AVG DEGRADATION", f"+{avg_deg:.2f}s")
-        with m4:
-            st.metric("TEAM", team)
+        with m1: st.metric("TOTAL LAPS", int(driver_laps['LapNumber'].max()))
+        with m2: st.metric("FASTEST LAP", f"{m}:{s:06.3f}")
+        with m3: st.metric("AVG DEGRADATION", f"+{avg_deg:.2f}s")
+        with m4: st.metric("TEAM", team)
 
-        st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="dim-rule"></div>', unsafe_allow_html=True)
 
         # Lap time chart
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=driver_laps['LapNumber'],
-            y=driver_laps['LapTimeSec'],
+            x=driver_laps['LapNumber'], y=driver_laps['LapTimeSec'],
             mode='lines+markers',
-            line=dict(color=team_color, width=2),
-            marker=dict(size=3, color=team_color),
-            fill='tozeroy',
-            fillcolor=hex_to_rgba(team_color, 0.05),
-            name=f'{DRIVER_NAMES.get(selected_driver, selected_driver)}',
+            line=dict(color=tc, width=2),
+            marker=dict(size=3),
+            fill='tozeroy', fillcolor=hex_to_rgba(tc, 0.04),
+            name=DRIVER_NAMES.get(selected_driver, selected_driver),
             hovertemplate='Lap %{x}: %{y:.3f}s<extra></extra>'
         ))
-        layout = {**PLOT_LAYOUT}
-        layout['title'] = dict(
-            text=f'{DRIVER_NAMES.get(selected_driver, selected_driver).upper()}  ·  {selected_race}  ·  LAP TIME PROGRESSION',
-            font=dict(size=14, color='#ffffff', family='monospace'),
+        fig.update_layout(
+            **PLOT_BASE,
+            title=dict(
+                text=f'{DRIVER_NAMES.get(selected_driver,selected_driver).upper()}  ·  {selected_race}  ·  LAP TIME PROGRESSION',
+                font=dict(size=12, color='#333', family='monospace'), x=0
+            ),
+            height=360, hovermode='x unified',
+            xaxis=ax('Lap Number'), yaxis=ax('Lap Time (s)')
         )
-        layout['height'] = 380
-        layout['xaxis'] = styled_axis('Lap Number')
-        layout['yaxis'] = styled_axis('Lap Time (s)')
-        layout['hovermode'] = 'x unified'
-        fig.update_layout(**layout)
         st.plotly_chart(fig, use_container_width=True)
 
         # Tire degradation
-        st.markdown("### TIRE DEGRADATION MODEL")
+        st.markdown('<div class="dim-rule"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-eyebrow">TIRE DEGRADATION MODEL</div>', unsafe_allow_html=True)
+
+        # Try exact match first, then fuzzy match
+        tire_model = None
         tire_model_path = f"models/tire_deg_{selected_race.replace(' ', '_')}.pkl"
         if os.path.exists(tire_model_path):
             tire_model = joblib.load(tire_model_path)
-            tire_ages = np.arange(1, 46)
-            compound_map = {'SOFT': 0, 'MEDIUM': 1, 'HARD': 2}
-            colors = {'SOFT': '#E24B4A', 'MEDIUM': '#EF9F27', 'HARD': '#888780'}
+        else:
+            # Try to find a matching model by race name fragment
+            all_models = [f for f in os.listdir('models/') if f.startswith('tire_deg_')]
+            race_clean = selected_race.lower().replace(' ', '').replace('_', '')
+            for mf in all_models:
+                mf_clean = mf.lower().replace('tire_deg_', '').replace('.pkl','').replace('_','').replace('0','').replace('1','').replace('2','').replace('3','').replace('4','')
+                if race_clean[:6] in mf_clean or mf_clean[:6] in race_clean:
+                    tire_model = joblib.load(f'models/{mf}')
+                    break
 
+        if tire_model:
+            tire_ages = np.arange(1, 46)
+            comp_map = {'SOFT': 0, 'MEDIUM': 1, 'HARD': 2}
+            comp_colors = {'SOFT': '#E24B4A', 'MEDIUM': '#EF9F27', 'HARD': '#888780'}
             fig2 = go.Figure()
-            for compound, c_num in compound_map.items():
+            for comp, cnum in comp_map.items():
                 X_pred = pd.DataFrame({
-                    'TyreLife': tire_ages,
-                    'TireLifeSq': tire_ages ** 2,
-                    'CompoundNum': c_num,
-                    'LapNum': 30
+                    'TyreLife': tire_ages, 'TireLifeSq': tire_ages**2,
+                    'CompoundNum': cnum, 'LapNum': 30
                 })
                 deltas = tire_model.predict(X_pred)
                 fig2.add_trace(go.Scatter(
-                    x=tire_ages, y=deltas,
-                    mode='lines',
-                    name=compound,
-                    line=dict(color=colors[compound], width=2.5),
-                    hovertemplate=f'{compound} · Lap %{{x}}: +%{{y:.2f}}s<extra></extra>'
+                    x=tire_ages, y=deltas, mode='lines',
+                    name=comp, line=dict(color=comp_colors[comp], width=2.5),
+                    hovertemplate=f'{comp} · Lap %{{x}}: +%{{y:.2f}}s<extra></extra>'
                 ))
-
-            layout2 = {**PLOT_LAYOUT}
-            layout2['height'] = 320
-            layout2['xaxis'] = styled_axis('Tire Age (laps)')
-            layout2['yaxis'] = styled_axis('Delta from fastest (s)')
-            fig2.update_layout(**layout2)
+            fig2.update_layout(
+                **PLOT_BASE, height=300,
+                xaxis=ax('Tire Age (laps)'), yaxis=ax('Delta from fastest (s)')
+            )
             st.plotly_chart(fig2, use_container_width=True)
         else:
-            st.markdown(f"""
-            <div style='background:#0d0d0d; border:1px solid #1a1a1a; border-left:3px solid #333;
-                        border-radius:4px; padding:1rem; font-size:12px; color:#444'>
-                No tire model for {selected_race} — available circuits: Bahrain, Britain, Saudi Arabia
-            </div>
-            """, unsafe_allow_html=True)
+            # Build a generic model from clean_laps for this race
+            race_laps = clean_laps[clean_laps['race_name'] == selected_race].copy()
+            if not race_laps.empty and 'DeltaFromFastest' in race_laps.columns:
+                from sklearn.ensemble import GradientBoostingRegressor
+                race_laps = race_laps.dropna(subset=['TyreLife','DeltaFromFastest','CompoundNum'])
+                race_laps['TireLifeSq'] = race_laps['TyreLife']**2
+                features = ['TyreLife','TireLifeSq','CompoundNum','LapNum']
+                if all(f in race_laps.columns for f in features):
+                    X = race_laps[features]
+                    y = race_laps['DeltaFromFastest']
+                    if len(X) > 20:
+                        m_temp = GradientBoostingRegressor(n_estimators=100, random_state=42)
+                        m_temp.fit(X, y)
+                        tire_ages = np.arange(1, 46)
+                        comp_map = {'SOFT': 0, 'MEDIUM': 1, 'HARD': 2}
+                        comp_colors = {'SOFT': '#E24B4A', 'MEDIUM': '#EF9F27', 'HARD': '#888780'}
+                        fig2 = go.Figure()
+                        for comp, cnum in comp_map.items():
+                            X_pred = pd.DataFrame({
+                                'TyreLife': tire_ages, 'TireLifeSq': tire_ages**2,
+                                'CompoundNum': cnum, 'LapNum': 30
+                            })
+                            deltas = m_temp.predict(X_pred)
+                            fig2.add_trace(go.Scatter(
+                                x=tire_ages, y=deltas, mode='lines',
+                                name=comp, line=dict(color=comp_colors[comp], width=2.5),
+                                hovertemplate=f'{comp} · Lap %{{x}}: +%{{y:.2f}}s<extra></extra>'
+                            ))
+                        fig2.update_layout(
+                            **PLOT_BASE, height=300,
+                            xaxis=ax('Tire Age (laps)'), yaxis=ax('Delta from fastest (s)')
+                        )
+                        st.plotly_chart(fig2, use_container_width=True)
+                    else:
+                        st.markdown('<div style="color:#2a2a2a;font-size:12px;padding:1rem 0">Insufficient data for tire model on this circuit.</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown('<div style="color:#2a2a2a;font-size:12px;padding:1rem 0">Tire model features not available for this race.</div>', unsafe_allow_html=True)
     else:
-        st.warning("No data for this combination.")
+        st.warning("No data available for this combination.")
 
 # ─────────────────────────────────────────
 # PAGE 2 — DRIVER DNA
 # ─────────────────────────────────────────
 elif "Driver DNA" in page:
-    st.markdown("# DRIVER DNA LAB")
-    st.markdown("### Telemetry fingerprinting · K-Means clustering · PCA analysis")
-    st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="page-header">
+        <div class="page-title">DRIVER DNA LAB</div>
+        <div class="page-subtitle">Telemetry fingerprinting · K-Means clustering · PCA · 76,721 telemetry points</div>
+    </div>
+    <div class="red-rule"></div>
+    """, unsafe_allow_html=True)
 
-    drivers_available = sorted(driver_dna['driver'].unique())
-    driver_display = {f"{DRIVER_NAMES.get(d, d)} ({d})": d for d in drivers_available}
+    drivers_avail = sorted(driver_dna['driver'].unique())
+    driver_disp = {f"{DRIVER_NAMES.get(d, d)} ({d})": d for d in drivers_avail}
 
-    col1, col2 = st.columns(2)
-    with col1:
-        d1_display = st.selectbox(
-            "DRIVER 1",
-            list(driver_display.keys()),
-            index=list(driver_display.keys()).index(
-                next(k for k in driver_display if driver_display[k] == 'VER'), 0
-            ) if 'VER' in drivers_available else 0
-        )
-        driver1 = driver_display[d1_display]
-    with col2:
-        d2_display = st.selectbox(
-            "DRIVER 2",
-            list(driver_display.keys()),
-            index=list(driver_display.keys()).index(
-                next(k for k in driver_display if driver_display[k] == 'HAM'), 0
-            ) if 'HAM' in drivers_available else 1
-        )
-        driver2 = driver_display[d2_display]
+    c1, c2 = st.columns(2)
+    with c1:
+        d1k = st.selectbox("DRIVER 1", list(driver_disp.keys()),
+                           index=next((i for i, k in enumerate(driver_disp) if driver_disp[k]=='VER'), 0))
+        driver1 = driver_disp[d1k]
+    with c2:
+        d2k = st.selectbox("DRIVER 2", list(driver_disp.keys()),
+                           index=next((i for i, k in enumerate(driver_disp) if driver_disp[k]=='HAM'), 1))
+        driver2 = driver_disp[d2k]
 
-    st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="red-rule"></div>', unsafe_allow_html=True)
 
-    raw_features = ['full_throttle_pct', 'heavy_brake_pct', 'avg_corner_speed',
-                    'throttle_smoothness', 'coast_pct', 'high_speed_pct']
-    categories = ['Full Throttle', 'Heavy Braking', 'Corner Speed',
-                  'Smoothness', 'Coasting', 'High Speed']
+    raw_feats = ['full_throttle_pct','heavy_brake_pct','avg_corner_speed',
+                 'throttle_smoothness','coast_pct','high_speed_pct']
+    cats = ['Full Throttle','Heavy Braking','Corner Speed','Smoothness','Coasting','High Speed']
 
-    def normalize_30_100(series):
-        return 30 + ((series - series.min()) / (series.max() - series.min())) * 70
+    dna_n = driver_dna.copy()
+    for f in raw_feats:
+        mn, mx = driver_dna[f].min(), driver_dna[f].max()
+        dna_n[f+'_n'] = 30 + ((driver_dna[f]-mn)/(mx-mn))*70
 
-    dna_norm = driver_dna.copy()
-    for f in raw_features:
-        dna_norm[f + '_norm'] = normalize_30_100(driver_dna[f])
+    d1r = dna_n[dna_n['driver']==driver1].iloc[0]
+    d2r = dna_n[dna_n['driver']==driver2].iloc[0]
+    nc = [f+'_n' for f in raw_feats]
+    v1 = [round(d1r[c],1) for c in nc]+[round(d1r[nc[0]],1)]
+    v2 = [round(d2r[c],1) for c in nc]+[round(d2r[nc[0]],1)]
+    cats_c = cats+[cats[0]]
 
-    d1 = dna_norm[dna_norm['driver'] == driver1].iloc[0]
-    d2 = dna_norm[dna_norm['driver'] == driver2].iloc[0]
-    norm_cols = [f + '_norm' for f in raw_features]
-    v1 = [round(d1[c], 1) for c in norm_cols] + [round(d1[norm_cols[0]], 1)]
-    v2 = [round(d2[c], 1) for c in norm_cols] + [round(d2[norm_cols[0]], 1)]
-    cats = categories + [categories[0]]
+    t1 = d1r['team']; t2 = d2r['team']
+    c1c = TEAM_COLORS.get(t1,'#E24B4A')
+    c2c = TEAM_COLORS.get(t2,'#378ADD')
 
-    t1 = d1['team']
-    t2 = d2['team']
-    c1 = TEAM_COLORS.get(t1, '#E24B4A')
-    c2 = TEAM_COLORS.get(t2, '#378ADD')
+    col_r, col_s = st.columns([1.4, 0.6])
 
-    col_radar, col_stats = st.columns([1.3, 0.7])
-
-    with col_radar:
-        fig_radar = go.Figure()
-        fig_radar.add_trace(go.Scatterpolar(
-            r=v1, theta=cats,
-            fill='toself',
-            fillcolor=hex_to_rgba(c1, 0.2),
-            line=dict(color=c1, width=3),
-            name=f'{DRIVER_NAMES.get(driver1, driver1)}',
-            marker=dict(size=7, color=c1)
+    with col_r:
+        fig_r = go.Figure()
+        fig_r.add_trace(go.Scatterpolar(
+            r=v1, theta=cats_c, fill='toself',
+            fillcolor=hex_to_rgba(c1c, 0.18),
+            line=dict(color=c1c, width=2.5),
+            name=DRIVER_NAMES.get(driver1, driver1),
+            marker=dict(size=6, color=c1c)
         ))
-        fig_radar.add_trace(go.Scatterpolar(
-            r=v2, theta=cats,
-            fill='toself',
-            fillcolor=hex_to_rgba(c2, 0.2),
-            line=dict(color=c2, width=3),
-            name=f'{DRIVER_NAMES.get(driver2, driver2)}',
-            marker=dict(size=7, color=c2)
+        fig_r.add_trace(go.Scatterpolar(
+            r=v2, theta=cats_c, fill='toself',
+            fillcolor=hex_to_rgba(c2c, 0.18),
+            line=dict(color=c2c, width=2.5),
+            name=DRIVER_NAMES.get(driver2, driver2),
+            marker=dict(size=6, color=c2c)
         ))
-        fig_radar.update_layout(
+        fig_r.update_layout(
             polar=dict(
-                bgcolor='#0a0a0a',
-                radialaxis=dict(
-                    visible=True, range=[0, 100],
-                    tickvals=[25, 50, 75, 100],
-                    tickfont=dict(color='#222', size=8),
-                    gridcolor='#151515',
-                    linecolor='#151515',
-                ),
+                bgcolor='#080808',
+                radialaxis=dict(visible=True, range=[0,100],
+                    tickvals=[25,50,75,100],
+                    tickfont=dict(color='#1a1a1a',size=8),
+                    gridcolor='#101010', linecolor='#101010'),
                 angularaxis=dict(
-                    tickfont=dict(color='#aaaaaa', size=11, family='monospace'),
-                    gridcolor='#151515',
-                    linecolor='#222',
-                )
+                    tickfont=dict(color='#888',size=11,family='monospace'),
+                    gridcolor='#111', linecolor='#151515')
             ),
             paper_bgcolor='#080808',
-            title=dict(
-                text=f'DRIVING STYLE COMPARISON',
-                font=dict(size=13, color='#444', family='monospace'),
-                x=0.5, xanchor='center'
-            ),
-            legend=dict(
-                bgcolor='rgba(10,10,10,0.95)',
-                bordercolor='#1e1e1e', borderwidth=1,
-                font=dict(color='#aaa', size=11, family='monospace'),
-                x=0.5, y=-0.08,
-                xanchor='center', orientation='h'
-            ),
-            height=480,
-            margin=dict(t=60, b=80, l=60, r=60),
+            title=dict(text='DRIVING STYLE FINGERPRINT',
+                       font=dict(size=11,color='#2a2a2a',family='monospace'), x=0.5, xanchor='center'),
+            legend=dict(bgcolor='rgba(8,8,8,0.95)', bordercolor='#141414', borderwidth=1,
+                        font=dict(color='#888',size=11,family='monospace'),
+                        x=0.5, y=-0.07, xanchor='center', orientation='h'),
+            height=500,
+            margin=dict(t=50,b=80,l=50,r=50),
         )
-        st.plotly_chart(fig_radar, use_container_width=True)
+        st.plotly_chart(fig_r, use_container_width=True)
 
-    with col_stats:
-        for drv, d_raw, color in [(driver1, driver_dna[driver_dna['driver'] == driver1].iloc[0], c1),
-                                   (driver2, driver_dna[driver_dna['driver'] == driver2].iloc[0], c2)]:
+    with col_s:
+        for drv, c_hex in [(driver1, c1c), (driver2, c2c)]:
+            d_raw = driver_dna[driver_dna['driver']==drv].iloc[0]
             full_name = DRIVER_NAMES.get(drv, drv)
-            archetype = d_raw.get('archetype', 'Unknown') if isinstance(d_raw.get('archetype'), str) else 'Unknown'
+            archetype = d_raw.get('archetype','Unknown')
+            if not isinstance(archetype, str): archetype = 'Unknown'
             st.markdown(f"""
-            <div style='background:#0d0d0d; border:1px solid #1a1a1a;
-                        border-left:3px solid {color}; border-radius:4px;
-                        padding:1rem; margin-bottom:1rem'>
-                <div style='font-family:Bebas Neue,monospace; font-size:1.3rem;
-                            color:{color}; letter-spacing:0.08em'>{full_name.upper()}</div>
-                <div style='font-size:10px; color:#333; letter-spacing:0.15em;
-                            margin-bottom:0.75rem'>{d_raw["team"]}</div>
-                <div style='font-size:11px; color:#555; line-height:2.2; font-family:monospace'>
-                    <span style='color:#2a2a2a'>ARCHETYPE</span><br>
-                    <span style='color:#aaa'>{archetype}</span><br>
-                    <span style='color:#2a2a2a'>FULL THROTTLE</span><br>
-                    <span style='color:#aaa'>{d_raw["full_throttle_pct"]:.1f}%</span><br>
-                    <span style='color:#2a2a2a'>HEAVY BRAKING</span><br>
-                    <span style='color:#aaa'>{d_raw["heavy_brake_pct"]:.1f}%</span><br>
-                    <span style='color:#2a2a2a'>CORNER SPEED</span><br>
-                    <span style='color:#aaa'>{d_raw["avg_corner_speed"]:.0f} km/h</span><br>
-                    <span style='color:#2a2a2a'>MAX SPEED</span><br>
-                    <span style='color:#aaa'>{d_raw["max_speed"]:.0f} km/h</span>
+            <div class="driver-card" style="border-top: 2px solid {c_hex}; margin-bottom: 12px">
+                <div class="driver-card-name" style="color:{c_hex}">{full_name.upper()}</div>
+                <div class="driver-card-team">{d_raw['team']}</div>
+                <div class="stat-row">
+                    <span class="stat-label">Archetype</span>
+                    <span class="stat-value">{archetype}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Full throttle</span>
+                    <span class="stat-value">{d_raw['full_throttle_pct']:.1f}%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Heavy braking</span>
+                    <span class="stat-value">{d_raw['heavy_brake_pct']:.1f}%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Corner speed</span>
+                    <span class="stat-value">{d_raw['avg_corner_speed']:.0f} km/h</span>
+                </div>
+                <div class="stat-row" style="border-bottom:none">
+                    <span class="stat-label">Max speed</span>
+                    <span class="stat-value">{d_raw['max_speed']:.0f} km/h</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-    # Telemetry speed trace
-    st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
-    st.markdown("### QUALIFYING SPEED TRACE")
+    # Telemetry
+    st.markdown('<div class="red-rule"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-eyebrow">QUALIFYING SPEED TRACE · HEAD TO HEAD</div>', unsafe_allow_html=True)
 
-    col_t1, col_t2, col_t3 = st.columns([1, 1, 1])
-    with col_t1:
-        tel_year = st.selectbox("YEAR", [2026, 2024, 2023, 2022], index=1)
-    with col_t2:
-        tel_race = st.selectbox(
-            "CIRCUIT",
-            ['Bahrain', 'Monaco', 'Britain', 'Italy', 'Australia', 'Japan'],
-            index=0
-        )
-    with col_t3:
-        st.markdown("<div style='padding-top:1.8rem'>", unsafe_allow_html=True)
+    tc1, tc2, tc3 = st.columns([1,1,1])
+    with tc1:
+        tel_year = st.selectbox("YEAR", [2026,2024,2023,2022], index=1)
+    with tc2:
+        tel_race = st.selectbox("CIRCUIT", AVAILABLE_RACES[tel_year])
+    with tc3:
+        st.markdown("<div style='padding-top:1.6rem'>", unsafe_allow_html=True)
         load_tel = st.button("LOAD TELEMETRY ▶")
         st.markdown("</div>", unsafe_allow_html=True)
 
     if load_tel:
-        with st.spinner(f"Loading {tel_race} {tel_year} telemetry..."):
+        with st.spinner(f"Loading {tel_race} {tel_year} Q telemetry..."):
             try:
                 from scipy.interpolate import interp1d
-                session = fastf1.get_session(tel_year, tel_race, 'Q')
-                session.load(telemetry=True, weather=False, messages=False)
+                sess = fastf1.get_session(tel_year, tel_race, 'Q')
+                sess.load(telemetry=True, weather=False, messages=False)
 
-                lap1 = session.laps.pick_driver(driver1).pick_fastest()
-                lap2 = session.laps.pick_driver(driver2).pick_fastest()
+                lap1 = sess.laps.pick_driver(driver1).pick_fastest()
+                lap2 = sess.laps.pick_driver(driver2).pick_fastest()
 
                 if lap1.empty or lap2.empty:
-                    st.error(f"No qualifying lap found for one of the drivers in {tel_race} {tel_year}")
+                    st.error(f"No lap found for one driver in {tel_race} {tel_year}. Try a different circuit or year.")
                 else:
                     tel1 = lap1.get_telemetry().add_distance()
                     tel2 = lap2.get_telemetry().add_distance()
-
-                    dist_min = max(tel1['Distance'].min(), tel2['Distance'].min())
-                    dist_max = min(tel1['Distance'].max(), tel2['Distance'].max())
-                    common_dist = np.linspace(dist_min, dist_max, 1500)
-
-                    s1 = interp1d(tel1['Distance'], tel1['Speed'],
-                                  kind='linear', fill_value='extrapolate')(common_dist)
-                    s2 = interp1d(tel2['Distance'], tel2['Speed'],
-                                  kind='linear', fill_value='extrapolate')(common_dist)
+                    dmin = max(tel1['Distance'].min(), tel2['Distance'].min())
+                    dmax = min(tel1['Distance'].max(), tel2['Distance'].max())
+                    cd = np.linspace(dmin, dmax, 1500)
+                    s1 = interp1d(tel1['Distance'], tel1['Speed'], fill_value='extrapolate')(cd)
+                    s2 = interp1d(tel2['Distance'], tel2['Speed'], fill_value='extrapolate')(cd)
                     delta = s1 - s2
 
-                    t1_sec = lap1['LapTime'].total_seconds()
-                    t2_sec = lap2['LapTime'].total_seconds()
-                    m1t, s1t = int(t1_sec // 60), t1_sec % 60
-                    m2t, s2t = int(t2_sec // 60), t2_sec % 60
-
+                    t1s = lap1['LapTime'].total_seconds()
+                    t2s = lap2['LapTime'].total_seconds()
                     n1 = DRIVER_NAMES.get(driver1, driver1)
                     n2 = DRIVER_NAMES.get(driver2, driver2)
 
-                    fig_tel = make_subplots(
-                        rows=2, cols=1,
-                        row_heights=[0.68, 0.32],
-                        vertical_spacing=0.06,
-                        shared_xaxes=True
-                    )
-
-                    fig_tel.add_trace(go.Scatter(
-                        x=common_dist, y=s1,
-                        mode='lines',
-                        name=f'{n1}  ·  {m1t}:{s1t:06.3f}',
-                        line=dict(color=c1, width=2.5),
+                    fig_t = make_subplots(rows=2, cols=1, row_heights=[0.68,0.32],
+                                          vertical_spacing=0.05, shared_xaxes=True)
+                    fig_t.add_trace(go.Scatter(
+                        x=cd, y=s1, mode='lines',
+                        name=f'{n1}  ·  {int(t1s//60)}:{t1s%60:06.3f}',
+                        line=dict(color=c1c, width=2.5),
                         hovertemplate=f'{driver1}: %{{y:.0f}} km/h<extra></extra>'
                     ), row=1, col=1)
-
-                    fig_tel.add_trace(go.Scatter(
-                        x=common_dist, y=s2,
-                        mode='lines',
-                        name=f'{n2}  ·  {m2t}:{s2t:06.3f}',
-                        line=dict(color=c2, width=2.5),
+                    fig_t.add_trace(go.Scatter(
+                        x=cd, y=s2, mode='lines',
+                        name=f'{n2}  ·  {int(t2s//60)}:{t2s%60:06.3f}',
+                        line=dict(color=c2c, width=2.5),
                         hovertemplate=f'{driver2}: %{{y:.0f}} km/h<extra></extra>'
                     ), row=1, col=1)
-
-                    fig_tel.add_trace(go.Scatter(
-                        x=common_dist, y=delta,
-                        mode='lines',
-                        fill='tozeroy',
-                        fillcolor=hex_to_rgba(c1, 0.12),
-                        line=dict(color=c1, width=1.5),
-                        name=f'Δ Speed ({driver1} − {driver2})',
+                    fig_t.add_trace(go.Scatter(
+                        x=cd, y=delta, mode='lines',
+                        fill='tozeroy', fillcolor=hex_to_rgba(c1c, 0.1),
+                        line=dict(color=c1c, width=1.5),
+                        name=f'Δ ({driver1} − {driver2})',
                         hovertemplate='Δ: %{y:.1f} km/h<extra></extra>'
                     ), row=2, col=1)
+                    fig_t.add_hline(y=0, line=dict(color='#1a1a1a', width=1), row=2, col=1)
 
-                    fig_tel.add_hline(
-                        y=0,
-                        line=dict(color='#2a2a2a', width=1),
-                        row=2, col=1
-                    )
+                    for row in [1,2]:
+                        fig_t.update_xaxes(gridcolor='#0f0f0f', zerolinecolor='#111',
+                                           tickfont=dict(color='#2a2a2a',size=9), row=row, col=1)
+                        fig_t.update_yaxes(gridcolor='#0f0f0f', zerolinecolor='#111',
+                                           tickfont=dict(color='#2a2a2a',size=9), row=row, col=1)
 
-                    for row in [1, 2]:
-                        fig_tel.update_xaxes(
-                            gridcolor='#111', zerolinecolor='#1e1e1e',
-                            tickfont=dict(color='#333', size=10),
-                            row=row, col=1
-                        )
-                        fig_tel.update_yaxes(
-                            gridcolor='#111', zerolinecolor='#1e1e1e',
-                            tickfont=dict(color='#444', size=10),
-                            row=row, col=1
-                        )
-
-                    fig_tel.update_yaxes(
-                        title_text='Speed (km/h)',
-                        title_font=dict(color='#444', size=11, family='monospace'),
-                        row=1, col=1
-                    )
-                    fig_tel.update_yaxes(
-                        title_text='Δ Speed (km/h)',
-                        title_font=dict(color='#444', size=11, family='monospace'),
-                        row=2, col=1
-                    )
-                    fig_tel.update_xaxes(
-                        title_text='Distance (m)',
-                        title_font=dict(color='#444', size=11, family='monospace'),
-                        row=2, col=1
-                    )
-
-                    fig_tel.update_layout(
+                    fig_t.update_yaxes(title_text='Speed (km/h)',
+                                       title_font=dict(color='#333',size=10,family='monospace'), row=1, col=1)
+                    fig_t.update_yaxes(title_text='Δ Speed',
+                                       title_font=dict(color='#333',size=10,family='monospace'), row=2, col=1)
+                    fig_t.update_xaxes(title_text='Distance (m)',
+                                       title_font=dict(color='#333',size=10,family='monospace'), row=2, col=1)
+                    fig_t.update_layout(
+                        **PLOT_BASE,
                         title=dict(
                             text=f'{tel_race.upper()} {tel_year}  ·  QUALIFYING  ·  {driver1} vs {driver2}',
-                            font=dict(size=14, color='#ffffff', family='monospace'),
-                            x=0.5, xanchor='center'
+                            font=dict(size=12,color='#333',family='monospace'), x=0.5, xanchor='center'
                         ),
-                        plot_bgcolor='#0a0a0a',
-                        paper_bgcolor='#0a0a0a',
-                        font=dict(color='#ffffff', family='monospace'),
-                        legend=dict(
-                            bgcolor='rgba(10,10,10,0.95)',
-                            bordercolor='#1e1e1e', borderwidth=1,
-                            font=dict(color='#aaa', size=11, family='monospace'),
-                            x=0.01, y=0.99
-                        ),
-                        height=620,
-                        margin=dict(t=60, b=50, l=70, r=20),
-                        hovermode='x unified',
-                        hoverlabel=dict(
-                            bgcolor='#111', bordercolor='#333',
-                            font=dict(color='#fff', family='monospace')
-                        )
+                        height=600, hovermode='x unified'
                     )
-                    st.plotly_chart(fig_tel, use_container_width=True)
+                    st.plotly_chart(fig_t, use_container_width=True)
 
             except Exception as e:
-                st.error(f"Telemetry error: {e}")
+                st.error(f"Telemetry error: {str(e)}")
 
 # ─────────────────────────────────────────
 # PAGE 3 — STRATEGY SIMULATOR
 # ─────────────────────────────────────────
 elif "Strategy Simulator" in page:
-    st.markdown("# STRATEGY SIMULATOR")
-    st.markdown("### ML pit stop decision engine · GradientBoosting · ROC-AUC 0.745")
-    st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="page-header">
+        <div class="page-title">STRATEGY SIMULATOR</div>
+        <div class="page-subtitle">ML pit decision engine · GradientBoosting · ROC-AUC 0.745 · 941 real pit stops</div>
+    </div>
+    <div class="red-rule"></div>
+    """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("### RACE SITUATION")
-        sim_tire_age = st.slider("TIRE AGE (laps)", 1, 50, 18)
-        sim_compound = st.selectbox("CURRENT COMPOUND", ['SOFT', 'MEDIUM', 'HARD'], index=1)
-        sim_position = st.slider("CURRENT POSITION", 1, 20, 5)
-    with col2:
-        st.markdown("### RACE STATE")
-        sim_race_progress = st.slider("RACE PROGRESS (%)", 0, 100, 45)
-        sim_laps_remaining = st.slider("LAPS REMAINING", 1, 60, 25)
+    sc1, sc2 = st.columns(2)
+    with sc1:
+        st.markdown('<div class="section-eyebrow">RACE SITUATION</div>', unsafe_allow_html=True)
+        sim_tire = st.slider("TIRE AGE (laps)", 1, 50, 18)
+        sim_comp = st.selectbox("COMPOUND", ['SOFT','MEDIUM','HARD'], index=1)
+        sim_pos = st.slider("CURRENT POSITION", 1, 20, 5)
+    with sc2:
+        st.markdown('<div class="section-eyebrow">RACE STATE</div>', unsafe_allow_html=True)
+        sim_prog = st.slider("RACE PROGRESS (%)", 0, 100, 45)
+        sim_laps = st.slider("LAPS REMAINING", 1, 60, 25)
         sim_team = st.selectbox("TEAM", list(TEAM_COLORS.keys()), index=0)
 
-    st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="red-rule"></div>', unsafe_allow_html=True)
 
-    compound_map = {'SOFT': 0, 'MEDIUM': 1, 'HARD': 2}
-    features = pd.DataFrame([{
-        'tire_age_at_pit': sim_tire_age,
-        'compound_num': compound_map[sim_compound],
-        'race_progress': sim_race_progress / 100,
-        'position_before': sim_position / 20,
-        'laps_remaining': sim_laps_remaining,
+    cmap = {'SOFT':0,'MEDIUM':1,'HARD':2}
+    feat = pd.DataFrame([{
+        'tire_age_at_pit': sim_tire,
+        'compound_num': cmap[sim_comp],
+        'race_progress': sim_prog/100,
+        'position_before': sim_pos/20,
+        'laps_remaining': sim_laps,
     }])
-
-    prob = strategy_model.predict_proba(features)[0][1]
+    prob = strategy_model.predict_proba(feat)[0][1]
     decision = "PIT NOW" if prob >= 0.5 else "STAY OUT"
-    decision_color = "#E24B4A" if prob >= 0.5 else "#1D9E75"
-    team_color = TEAM_COLORS.get(sim_team, '#E24B4A')
+    dc = "#E24B4A" if prob >= 0.5 else "#1D9E75"
+    tc_team = TEAM_COLORS.get(sim_team,'#E24B4A')
 
-    col_dec, col_gauge, col_info = st.columns([1, 1, 1])
+    rc1, rc2, rc3 = st.columns([1,1,1])
 
-    with col_dec:
+    with rc1:
         st.markdown(f"""
-        <div style='
-            background: #0d0d0d;
-            border: 1px solid #1a1a1a;
-            border-top: 3px solid {decision_color};
-            border-radius: 6px;
-            padding: 2.5rem 1.5rem;
-            text-align: center;
-            height: 100%;
-        '>
-            <div style='font-size:10px; color:#333; letter-spacing:0.2em;
-                        text-transform:uppercase; margin-bottom:12px; font-family:monospace'>
-                ML RECOMMENDATION
-            </div>
-            <div style='font-family:Bebas Neue,monospace; font-size:3.5rem;
-                        color:{decision_color}; letter-spacing:0.1em; line-height:1'>
-                {decision}
-            </div>
-            <div style='font-size:11px; color:#555; margin-top:12px; font-family:monospace'>
-                Confidence: {prob*100:.1f}%
-            </div>
-            <div style='margin-top:1rem; height:4px; border-radius:2px;
-                        background:linear-gradient(90deg, {decision_color} {prob*100:.0f}%, #1a1a1a {prob*100:.0f}%)'>
-            </div>
+        <div class="decision-box" style="border-top: 3px solid {dc}">
+            <div class="decision-label">ML RECOMMENDATION</div>
+            <div class="decision-text" style="color:{dc}">{decision}</div>
+            <div style="margin: 14px 0 10px; height: 3px; border-radius: 2px;
+                        background: linear-gradient(90deg, {dc} {prob*100:.0f}%, #111 {prob*100:.0f}%)"></div>
+            <div class="decision-conf">Confidence: {prob*100:.1f}%</div>
         </div>
         """, unsafe_allow_html=True)
 
-    with col_gauge:
-        fig_gauge = go.Figure(go.Indicator(
+    with rc2:
+        fig_g = go.Figure(go.Indicator(
             mode="gauge+number",
-            value=prob * 100,
-            title=dict(
-                text="PIT PROBABILITY",
-                font=dict(color='#444', size=11, family='monospace')
-            ),
-            number=dict(
-                suffix="%",
-                font=dict(color='#ffffff', size=28, family='monospace')
-            ),
+            value=prob*100,
+            title=dict(text="PIT PROBABILITY", font=dict(color='#2a2a2a',size=10,family='monospace')),
+            number=dict(suffix="%", font=dict(color='#fff',size=26,family='monospace')),
             gauge=dict(
-                axis=dict(
-                    range=[0, 100],
-                    tickfont=dict(color='#333', size=9),
-                    tickcolor='#222'
-                ),
-                bar=dict(color=decision_color, thickness=0.6),
-                bgcolor='#0d0d0d',
-                bordercolor='#1a1a1a',
-                borderwidth=1,
+                axis=dict(range=[0,100], tickfont=dict(color='#1a1a1a',size=8), tickcolor='#111'),
+                bar=dict(color=dc, thickness=0.55),
+                bgcolor='#0a0a0a', bordercolor='#111', borderwidth=1,
                 steps=[
-                    dict(range=[0, 35], color='#0d150d'),
-                    dict(range=[35, 65], color='#15150d'),
-                    dict(range=[65, 100], color='#150d0d'),
+                    dict(range=[0,35], color='#0a120a'),
+                    dict(range=[35,65], color='#12120a'),
+                    dict(range=[65,100], color='#120a0a'),
                 ],
-                threshold=dict(
-                    line=dict(color='#ffffff', width=1.5),
-                    thickness=0.7,
-                    value=50
-                )
+                threshold=dict(line=dict(color='#333',width=1.5), thickness=0.7, value=50)
             )
         ))
-        fig_gauge.update_layout(
+        fig_g.update_layout(
             paper_bgcolor='#080808',
-            font=dict(color='#ffffff', family='monospace'),
-            height=250,
-            margin=dict(t=40, b=10, l=30, r=30)
+            font=dict(color='#fff',family='monospace'),
+            height=240, margin=dict(t=40,b=10,l=25,r=25)
         )
-        st.plotly_chart(fig_gauge, use_container_width=True)
+        st.plotly_chart(fig_g, use_container_width=True)
 
-    with col_info:
-        if prob >= 0.7:
-            msg = "⚠️ Strong pit signal. Tire cliff approaching. Box this lap."
-            msg_color = "#E24B4A"
-        elif prob >= 0.5:
-            msg = "🟡 Marginal window. Weigh track position vs fresh rubber."
-            msg_color = "#EF9F27"
-        elif prob >= 0.3:
-            msg = "🟢 Tires viable. Stay out if position is valuable."
-            msg_color = "#1D9E75"
-        else:
-            msg = "✅ No pit required. Performance still strong."
-            msg_color = "#378ADD"
+    with rc3:
+        if prob >= 0.7: msg, mc = "Strong pit signal. Tire cliff approaching. Box this lap.", "#E24B4A"
+        elif prob >= 0.5: msg, mc = "Marginal window. Weigh track position vs fresh rubber.", "#EF9F27"
+        elif prob >= 0.3: msg, mc = "Tires still viable. Hold position if it matters.", "#1D9E75"
+        else: msg, mc = "No pit required. Performance still strong.", "#378ADD"
 
         st.markdown(f"""
-        <div style='background:#0d0d0d; border:1px solid #1a1a1a;
-                    border-left:3px solid {msg_color}; border-radius:4px;
-                    padding:1.5rem; height:100%; font-family:monospace'>
-            <div style='font-size:10px; color:#333; letter-spacing:0.2em;
-                        text-transform:uppercase; margin-bottom:1rem'>ANALYSIS</div>
-            <div style='font-size:12px; color:#888; line-height:1.8; margin-bottom:1.5rem'>
-                {msg}
-            </div>
-            <div style='font-size:11px; color:#2a2a2a; line-height:2.5'>
-                <span style='color:#333'>TIRE AGE</span> · 
-                <span style='color:#666'>{sim_tire_age} laps</span><br>
-                <span style='color:#333'>COMPOUND</span> · 
-                <span style='color:#666'>{sim_compound}</span><br>
-                <span style='color:#333'>POSITION</span> · 
-                <span style='color:#666'>P{sim_position}</span><br>
-                <span style='color:#333'>PROGRESS</span> · 
-                <span style='color:#666'>{sim_race_progress}%</span><br>
-                <span style='color:#333'>LAPS LEFT</span> · 
-                <span style='color:{team_color}'>{sim_laps_remaining}</span>
+        <div class="analysis-box" style="border-top: 2px solid {mc}">
+            <div class="section-eyebrow">STRATEGY ANALYSIS</div>
+            <div style="font-size:12px; color:#555; line-height:1.8; margin-bottom:1.25rem">{msg}</div>
+            <div class="stat-row"><span class="stat-label">Tire age</span><span class="stat-value">{sim_tire} laps</span></div>
+            <div class="stat-row"><span class="stat-label">Compound</span><span class="stat-value">{sim_comp}</span></div>
+            <div class="stat-row"><span class="stat-label">Position</span><span class="stat-value">P{sim_pos}</span></div>
+            <div class="stat-row"><span class="stat-label">Race progress</span><span class="stat-value">{sim_prog}%</span></div>
+            <div class="stat-row" style="border-bottom:none">
+                <span class="stat-label">Laps remaining</span>
+                <span style="color:{tc_team};font-size:0.72rem">{sim_laps}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-    # Sensitivity analysis
-    st.markdown('<div class="red-line"></div>', unsafe_allow_html=True)
-    st.markdown("### PIT WINDOW SENSITIVITY")
+    st.markdown('<div class="dim-rule"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-eyebrow">PIT WINDOW SENSITIVITY · TIRE AGE vs PROBABILITY</div>', unsafe_allow_html=True)
 
     tire_ages = np.arange(1, 51)
-    probs = []
-    for ta in tire_ages:
-        f = pd.DataFrame([{
-            'tire_age_at_pit': ta,
-            'compound_num': compound_map[sim_compound],
-            'race_progress': sim_race_progress / 100,
-            'position_before': sim_position / 20,
-            'laps_remaining': sim_laps_remaining,
-        }])
-        probs.append(strategy_model.predict_proba(f)[0][1] * 100)
+    probs = [strategy_model.predict_proba(pd.DataFrame([{
+        'tire_age_at_pit': ta, 'compound_num': cmap[sim_comp],
+        'race_progress': sim_prog/100, 'position_before': sim_pos/20,
+        'laps_remaining': sim_laps
+    }]))[0][1]*100 for ta in tire_ages]
 
-    fig_sens = go.Figure()
-    fig_sens.add_trace(go.Scatter(
-        x=tire_ages, y=probs,
-        mode='lines',
-        fill='tozeroy',
-        fillcolor='rgba(226,75,74,0.08)',
-        line=dict(color='#E24B4A', width=2.5),
-        hovertemplate='Tire age %{x}: %{y:.1f}%<extra></extra>'
+    fig_s = go.Figure()
+    fig_s.add_trace(go.Scatter(
+        x=tire_ages, y=probs, mode='lines',
+        fill='tozeroy', fillcolor='rgba(226,75,74,0.06)',
+        line=dict(color='#E24B4A', width=2),
+        hovertemplate='Age %{x}: %{y:.1f}%<extra></extra>'
     ))
-    fig_sens.add_hline(
-        y=50,
-        line=dict(color='#333', width=1, dash='dash'),
-        annotation_text="PIT THRESHOLD",
-        annotation_font=dict(color='#444', size=9, family='monospace')
-    )
-    fig_sens.add_vline(
-        x=sim_tire_age,
-        line=dict(color='#EF9F27', width=1.5, dash='dot'),
-        annotation_text=f"NOW",
-        annotation_font=dict(color='#EF9F27', size=9, family='monospace')
-    )
-
-    sens_layout = {**PLOT_LAYOUT}
-    sens_layout['height'] = 300
-    sens_layout['xaxis'] = styled_axis('Tire Age (laps)')
-    sens_layout['yaxis'] = {**styled_axis('Pit Probability (%)'), 'range': [0, 100]}
-    sens_layout['margin'] = dict(t=30, b=50, l=60, r=20)
-    fig_sens.update_layout(**sens_layout)
-    st.plotly_chart(fig_sens, use_container_width=True)
+    fig_s.add_hline(y=50, line=dict(color='#1a1a1a',width=1,dash='dash'),
+                    annotation_text="THRESHOLD", annotation_font=dict(color='#2a2a2a',size=9,family='monospace'))
+    fig_s.add_vline(x=sim_tire, line=dict(color='#EF9F27',width=1.5,dash='dot'),
+                    annotation_text="NOW", annotation_font=dict(color='#EF9F27',size=9,family='monospace'))
+    fig_s.update_layout(**PLOT_BASE, height=280,
+                        xaxis=ax('Tire Age (laps)'),
+                        yaxis={**ax('Pit Probability (%)'), 'range':[0,100]},
+                        margin=dict(t=30,b=45,l=55,r=20))
+    st.plotly_chart(fig_s, use_container_width=True)
 
 # ─────────────────────────────────────────
-# GLOBAL FOOTER
+# FOOTER
 # ─────────────────────────────────────────
 st.markdown("""
-<div style='margin-top:4rem; padding-top:1rem;
-            border-top:1px solid #111; text-align:center'>
-    <div style='font-family:monospace; font-size:11px; color:#222;
-                letter-spacing:0.15em; line-height:2'>
-        F1 STRATEGY INTELLIGENCE SYSTEM<br>
-        <span style='color:#1a1a1a'>
-            Built with FastF1 · scikit-learn · Streamlit · Plotly
-        </span><br>
-        <span style='color:#E24B4A; font-size:13px'>♥</span>
-        <span style='color:#1a1a1a'> Made with love by Arin</span>
+<div class="footer-wrap">
+    <div class="footer-main">F1 STRATEGY INTELLIGENCE SYSTEM</div>
+    <div class="footer-sub">FastF1 · scikit-learn · Streamlit · Plotly · 2022–2026</div>
+    <div style="margin: 8px 0">
+        <span class="footer-heart">♥</span>
+        <span class="footer-by"> &nbsp;Made with love by Arin</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
