@@ -22,6 +22,17 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# Force sidebar open always
+st.markdown("""
+<style>
+[data-testid="collapsedControl"] { display: none !important; }
+[data-testid="stSidebar"] { 
+    transform: none !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
 # CONSTANTS
@@ -670,7 +681,8 @@ if "Race Strategy" in page:
                 font=dict(size=12, color='#333', family='monospace'), x=0
             ),
             height=360, hovermode='x unified',
-            xaxis=ax('Lap Number'), yaxis=ax('Lap Time (s)')
+            xaxis=ax('Lap Number'), 
+            yaxis={**ax('Lap Time (s)'), 'range': [driver_laps['LapTimeSec'].min()*0.98, driver_laps['LapTimeSec'].max()*1.02]}
         )
         st.plotly_chart(fig, use_container_width=True)
 
