@@ -1097,7 +1097,7 @@ elif "Strategy Simulator" in page:
                     annotation_text="NOW", annotation_font=dict(color='#EF9F27',size=9,family='monospace'))
     fig_s.update_layout(**PLOT_BASE, height=280,
                         xaxis=ax('Tire Age (laps)'),
-                        yaxis={**ax('Pit Probability (%)'), 'range':[0,100]},
+                        yaxis=dict(**ax('Pit Probability (%)'), range=[0,100]),
                         margin=dict(t=30,b=45,l=55,r=20))
     st.plotly_chart(fig_s, use_container_width=True)
 
