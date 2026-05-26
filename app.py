@@ -30,7 +30,7 @@ st.set_page_config(
 def get_logo():
     for path in ['f1_logo.png', 'f1_logo.jpg', 'f1_logo.avif']:
         if os.path.exists(path):
-            ext = path.split('.')[-1]
+            ext  = path.split('.')[-1]
             mime = 'image/avif' if ext == 'avif' else f'image/{ext}'
             with open(path, 'rb') as f:
                 b64 = base64.b64encode(f.read()).decode()
@@ -43,41 +43,41 @@ LOGO_SRC = get_logo()
 # CONSTANTS
 # ─────────────────────────────────────────
 AVAILABLE_RACES = {
-    2022: ['Bahrain', 'Saudi Arabia', 'Australia', 'Spain', 'Monaco',
-           'Britain', 'Hungary', 'Belgium', 'Italy'],
-    2023: ['Bahrain', 'Saudi Arabia', 'Australia', 'Spain', 'Monaco',
-           'Britain', 'Hungary', 'Italy', 'Singapore'],
-    2024: ['Bahrain', 'Saudi Arabia', 'Australia', 'Spain', 'Monaco',
-           'Britain', 'Hungary', 'Italy', 'Singapore'],
-    2026: ['Australia', 'China', 'Japan'],
+    2022: ['Bahrain','Saudi Arabia','Australia','Spain','Monaco',
+           'Britain','Hungary','Belgium','Italy'],
+    2023: ['Bahrain','Saudi Arabia','Australia','Spain','Monaco',
+           'Britain','Hungary','Italy','Singapore'],
+    2024: ['Bahrain','Saudi Arabia','Australia','Spain','Monaco',
+           'Britain','Hungary','Italy','Singapore'],
+    2026: ['Australia','China','Japan'],
 }
 
 DRIVER_NAMES = {
-    'VER': 'Max Verstappen', 'LEC': 'Charles Leclerc',
-    'RUS': 'George Russell', 'SAI': 'Carlos Sainz',
-    'PER': 'Sergio Perez', 'ALO': 'Fernando Alonso',
-    'NOR': 'Lando Norris', 'PIA': 'Oscar Piastri',
-    'HAM': 'Lewis Hamilton', 'HUL': 'Nico Hulkenberg',
-    'TSU': 'Yuki Tsunoda', 'STR': 'Lance Stroll',
-    'ALB': 'Alexander Albon', 'RIC': 'Daniel Ricciardo',
-    'MAG': 'Kevin Magnussen', 'BOT': 'Valtteri Bottas',
-    'ZHO': 'Guanyu Zhou', 'SAR': 'Logan Sargeant',
-    'OCO': 'Esteban Ocon', 'GAS': 'Pierre Gasly',
-    'ANT': 'Kimi Antonelli', 'LAW': 'Liam Lawson',
-    'HAD': 'Isack Hadjar', 'BEA': 'Oliver Bearman',
-    'BOR': 'Gabriel Bortoleto', 'COL': 'Franco Colapinto',
-    'DOO': 'Jack Doohan', 'LIN': 'Jack Doohan',
+    'VER':'Max Verstappen',  'LEC':'Charles Leclerc',
+    'RUS':'George Russell',  'SAI':'Carlos Sainz',
+    'PER':'Sergio Perez',    'ALO':'Fernando Alonso',
+    'NOR':'Lando Norris',    'PIA':'Oscar Piastri',
+    'HAM':'Lewis Hamilton',  'HUL':'Nico Hulkenberg',
+    'TSU':'Yuki Tsunoda',    'STR':'Lance Stroll',
+    'ALB':'Alexander Albon', 'RIC':'Daniel Ricciardo',
+    'MAG':'Kevin Magnussen', 'BOT':'Valtteri Bottas',
+    'ZHO':'Guanyu Zhou',     'SAR':'Logan Sargeant',
+    'OCO':'Esteban Ocon',    'GAS':'Pierre Gasly',
+    'ANT':'Kimi Antonelli',  'LAW':'Liam Lawson',
+    'HAD':'Isack Hadjar',    'BEA':'Oliver Bearman',
+    'BOR':'Gabriel Bortoleto','COL':'Franco Colapinto',
+    'DOO':'Jack Doohan',     'LIN':'Jack Doohan',
 }
 
 TEAM_COLORS = {
-    'Red Bull Racing': '#3671C6', 'Ferrari': '#E8002D',
-    'Mercedes': '#27F4D2', 'McLaren': '#FF8000',
-    'Aston Martin': '#229971', 'Alpine': '#FF87BC',
-    'Williams': '#64C4FF', 'AlphaTauri': '#6692FF',
-    'RB': '#6692FF', 'Racing Bulls': '#6692FF',
-    'Alfa Romeo': '#C92D4B', 'Kick Sauber': '#52E252',
-    'Haas F1 Team': '#B6BABD', 'Cadillac': '#CC0000',
-    'Audi': '#F50000',
+    'Red Bull Racing':'#3671C6', 'Ferrari':'#E8002D',
+    'Mercedes':'#27F4D2',        'McLaren':'#FF8000',
+    'Aston Martin':'#229971',    'Alpine':'#FF87BC',
+    'Williams':'#64C4FF',        'AlphaTauri':'#6692FF',
+    'RB':'#6692FF',              'Racing Bulls':'#6692FF',
+    'Alfa Romeo':'#C92D4B',      'Kick Sauber':'#52E252',
+    'Haas F1 Team':'#B6BABD',    'Cadillac':'#CC0000',
+    'Audi':'#F50000',
 }
 
 # ─────────────────────────────────────────
@@ -94,8 +94,8 @@ def get_race_schedule():
             if race_date.tzinfo is None:
                 race_date = race_date.replace(tzinfo=timezone.utc)
             races.append({
-                'name': row['EventName'],
-                'date': race_date,
+                'name':  row['EventName'],
+                'date':  race_date,
                 'round': int(row['RoundNumber'])
             })
         future = [r for r in races if r['date'] > now]
@@ -127,7 +127,7 @@ st.markdown("""
     max-width: 1400px !important;
 }
 
-/* SIDEBAR */
+/* ── SIDEBAR ── */
 [data-testid="stSidebar"] {
     background: #080808 !important;
     border-right: 1px solid #141414 !important;
@@ -136,17 +136,17 @@ st.markdown("""
 }
 [data-testid="stSidebar"] > div {
     padding: 0 !important;
-    height: 100% !important;
 }
-[data-testid="collapsedControl"] { display: none !important; }
-
-/* TYPOGRAPHY */
-h1, h2 {
-    font-family: 'Bebas Neue', monospace !important;
-    color: #ffffff !important;
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+button[kind="headerNoPadding"],
+[aria-label="Collapse sidebar"],
+[aria-label="keyboard_double_arrow_left"] {
+    display: none !important;
+    visibility: hidden !important;
 }
 
-/* METRICS */
+/* ── METRICS ── */
 [data-testid="metric-container"] {
     background: #0d0d0d !important;
     border: 1px solid #1e1e1e !important;
@@ -159,7 +159,7 @@ h1, h2 {
     border-top-color: #E8002D !important;
 }
 [data-testid="metric-container"] label {
-    color: #666 !important;
+    color: #777 !important;
     font-size: 0.65rem !important;
     letter-spacing: 0.15em !important;
     text-transform: uppercase !important;
@@ -170,7 +170,7 @@ h1, h2 {
     font-weight: 400 !important;
 }
 
-/* INPUTS */
+/* ── INPUTS ── */
 .stSelectbox > div > div {
     background: #0d0d0d !important;
     border: 1px solid #222 !important;
@@ -178,15 +178,14 @@ h1, h2 {
     color: #cccccc !important;
 }
 .stSelectbox label, .stSlider label {
-    color: #666 !important;
+    color: #777 !important;
     font-size: 0.65rem !important;
     letter-spacing: 0.15em !important;
     text-transform: uppercase !important;
 }
 .stSlider > div > div > div { background: #E8002D !important; }
-.stSlider [data-testid="stThumbValue"] { color: #fff !important; }
 
-/* BUTTONS */
+/* ── BUTTONS ── */
 .stButton > button {
     background: transparent !important;
     border: 1px solid #E8002D !important;
@@ -203,21 +202,20 @@ h1, h2 {
 .stButton > button:hover {
     background: #E8002D !important;
     color: #000000 !important;
-    font-weight: 500 !important;
 }
 
-/* RADIO — Navigation */
-.stRadio > div {
+/* ── RADIO NAV ── */
+[data-testid="stSidebar"] .stRadio > div {
     gap: 0 !important;
     flex-direction: column !important;
 }
-.stRadio > div > label {
+[data-testid="stSidebar"] .stRadio label {
     display: flex !important;
     align-items: center !important;
     padding: 12px 24px !important;
     border-left: 2px solid transparent !important;
-    color: #555 !important;
-    font-size: 0.72rem !important;
+    color: #888 !important;
+    font-size: 0.75rem !important;
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
     cursor: pointer !important;
@@ -226,58 +224,60 @@ h1, h2 {
     border-radius: 0 !important;
     background: transparent !important;
 }
-.stRadio > div > label:hover {
-    color: #aaaaaa !important;
-    border-left-color: #333 !important;
-    background: rgba(255,255,255,0.02) !important;
+[data-testid="stSidebar"] .stRadio label:hover {
+    color: #bbbbbb !important;
+    border-left-color: #444 !important;
+    background: rgba(255,255,255,0.025) !important;
 }
-.stRadio > div > label[data-baseweb="radio"] {
-    color: #555 !important;
+[data-testid="stSidebar"] .stRadio label:has(input:checked) {
+    color: #ffffff !important;
+    border-left-color: #E8002D !important;
+    background: rgba(232,0,45,0.06) !important;
 }
 
-/* HIDE STREAMLIT CHROME */
+/* ── HIDE STREAMLIT CHROME ── */
 #MainMenu, footer, header { visibility: hidden; }
 .stDeployButton { display: none !important; }
 
-/* FLIP CLOCK */
+/* ── FLIP CLOCK ── */
 .flip-clock-wrap {
     display: grid;
-    grid-template-columns: 1fr 4px 1fr 4px 1fr 4px 1fr;
+    grid-template-columns: 1fr 12px 1fr 12px 1fr 12px 1fr;
     gap: 4px;
     align-items: start;
     margin: 10px 0;
 }
 .flip-unit { display: flex; flex-direction: column; align-items: center; }
 .flip-card {
-    background: linear-gradient(180deg, #111 0%, #0d0d0d 50%, #0a0a0a 51%, #111 100%);
-    border: 1px solid #1e1e1e;
+    background: linear-gradient(180deg, #161616 0%, #111 49%, #0d0d0d 51%, #161616 100%);
+    border: 1px solid #222;
     border-top: 2px solid #E8002D;
     border-radius: 4px;
     width: 100%;
-    padding: 12px 4px 10px;
+    padding: 10px 4px 8px;
     text-align: center;
     position: relative;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 .flip-card::after {
     content: '';
     position: absolute;
     left: 0; right: 0; top: 50%;
     height: 1px;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.9);
     z-index: 2;
 }
 .flip-num {
     font-family: 'Bebas Neue', monospace;
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: #E8002D;
     line-height: 1;
     display: block;
-    text-shadow: 0 0 20px rgba(232,0,45,0.4);
+    text-shadow: 0 0 20px rgba(232,0,45,0.5);
 }
 .flip-lbl {
-    font-size: 0.48rem;
-    color: #444;
+    font-size: 0.46rem;
+    color: #555;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     display: block;
@@ -285,12 +285,13 @@ h1, h2 {
 }
 .flip-sep {
     font-family: 'Bebas Neue', monospace;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     color: #E8002D;
     text-align: center;
-    opacity: 0.4;
-    padding-top: 10px;
+    opacity: 0.35;
+    padding-top: 8px;
     align-self: flex-start;
+    line-height: 1;
 }
 .next-race-name {
     font-family: 'Bebas Neue', monospace;
@@ -298,27 +299,19 @@ h1, h2 {
     color: #ffffff;
     letter-spacing: 0.12em;
     text-align: center;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     line-height: 1.2;
 }
-.next-race-rd {
-    font-size: 0.52rem;
-    color: #444;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    text-align: center;
-    margin-bottom: 10px;
-}
 
-/* SIDEBAR TEXT */
+/* ── SIDEBAR TEXT ── */
 .sidebar-eyebrow {
     font-size: 0.52rem;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #333;
+    color: #444;
     margin-bottom: 10px;
     padding-bottom: 6px;
-    border-bottom: 1px solid #111;
+    border-bottom: 1px solid #141414;
 }
 .coverage-row {
     display: flex;
@@ -326,7 +319,7 @@ h1, h2 {
     gap: 8px;
     padding: 4px 0;
     font-size: 0.7rem;
-    color: #555;
+    color: #666;
     letter-spacing: 0.04em;
 }
 .coverage-dot {
@@ -336,7 +329,7 @@ h1, h2 {
     flex-shrink: 0;
 }
 
-/* PAGE ELEMENTS */
+/* ── PAGE ELEMENTS ── */
 .red-rule {
     height: 1px;
     background: linear-gradient(90deg, #E8002D 0%, rgba(232,0,45,0.3) 50%, transparent 100%);
@@ -359,7 +352,7 @@ h1, h2 {
 }
 .page-subtitle {
     font-size: 0.62rem;
-    color: #444;
+    color: #555;
     letter-spacing: 0.2em;
     text-transform: uppercase;
 }
@@ -367,7 +360,7 @@ h1, h2 {
     font-size: 0.58rem;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: #444;
+    color: #555;
     margin-bottom: 0.85rem;
     padding-bottom: 0.6rem;
     border-bottom: 1px solid #141414;
@@ -380,7 +373,7 @@ h1, h2 {
     border-bottom: 1px solid #0f0f0f;
     font-size: 0.72rem;
 }
-.stat-label { color: #444; letter-spacing: 0.1em; text-transform: uppercase; }
+.stat-label { color: #555; letter-spacing: 0.1em; text-transform: uppercase; }
 .stat-value { color: #aaaaaa; }
 .driver-card {
     background: #0a0a0a;
@@ -398,7 +391,7 @@ h1, h2 {
 }
 .driver-card-team {
     font-size: 0.58rem;
-    color: #333;
+    color: #444;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     margin-bottom: 1rem;
@@ -417,7 +410,7 @@ h1, h2 {
 }
 .decision-label {
     font-size: 0.56rem;
-    color: #444;
+    color: #555;
     letter-spacing: 0.28em;
     text-transform: uppercase;
     margin-bottom: 14px;
@@ -430,7 +423,7 @@ h1, h2 {
 }
 .decision-conf {
     font-size: 0.66rem;
-    color: #555;
+    color: #666;
     letter-spacing: 0.15em;
     margin-top: 14px;
 }
@@ -441,12 +434,6 @@ h1, h2 {
     padding: 1.25rem;
     height: 100%;
 }
-.footer-wrap {
-    margin-top: 5rem;
-    padding: 1.5rem 0;
-    border-top: 1px solid #0f0f0f;
-    text-align: center;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -455,7 +442,7 @@ h1, h2 {
 # ─────────────────────────────────────────
 @st.cache_data
 def load_data():
-    clean_laps = pd.read_csv('data/clean_laps.csv')
+    clean_laps  = pd.read_csv('data/clean_laps.csv')
     optimal_pit = pd.read_csv('data/optimal_pit_df.csv')
     driver_dna  = pd.read_csv('data/driver_dna.csv')
     return clean_laps, optimal_pit, driver_dna
@@ -495,8 +482,8 @@ def ax(title=''):
         title=title,
         gridcolor='#111111',
         zerolinecolor='#1a1a1a',
-        tickfont=dict(color='#444', size=9),
-        title_font=dict(color='#555', size=10, family='monospace')
+        tickfont=dict(color='#555', size=9),
+        title_font=dict(color='#666', size=10, family='monospace')
     )
 
 # ─────────────────────────────────────────
@@ -506,7 +493,7 @@ with st.sidebar:
 
     # F1 Logo
     if LOGO_SRC:
-        logo_tag = f'<img src="{LOGO_SRC}" width="72" style="filter:drop-shadow(0 0 8px rgba(232,0,45,0.5));object-fit:contain">'
+        logo_tag = f'<img src="{LOGO_SRC}" width="68" style="filter:drop-shadow(0 0 10px rgba(232,0,45,0.6));object-fit:contain">'
     else:
         logo_tag = '<div style="font-family:Bebas Neue,monospace;font-size:1.6rem;background:#E8002D;color:#fff;padding:4px 12px;border-radius:2px;letter-spacing:0.05em">F1</div>'
 
@@ -517,7 +504,7 @@ with st.sidebar:
             <div>
                 <div style="font-family:'Bebas Neue',monospace;font-size:1.25rem;
                             color:#ffffff;letter-spacing:0.15em;line-height:1.1">STRATEGY</div>
-                <div style="font-size:0.52rem;color:#333;letter-spacing:0.28em;
+                <div style="font-size:0.52rem;color:#444;letter-spacing:0.28em;
                             text-transform:uppercase;margin-top:3px">Intelligence System</div>
             </div>
         </div>
@@ -525,42 +512,58 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    # Countdown
+    # Real-time flip clock countdown
     next_race = get_race_schedule()
     if next_race:
-        now = datetime.now(timezone.utc)
-        delta = next_race['date'] - now
-        total_secs = max(0, int(delta.total_seconds()))
-        days    = total_secs // 86400
-        hours   = (total_secs % 86400) // 3600
-        minutes = (total_secs % 3600) // 60
-        seconds = total_secs % 60
-
+        race_ts = int(next_race['date'].timestamp() * 1000)
         st.markdown(f"""
         <div style="padding:0 24px 18px">
             <div class="sidebar-eyebrow">NEXT RACE · RD {next_race['round']}</div>
             <div class="next-race-name">{next_race['name'].upper()}</div>
             <div class="flip-clock-wrap">
                 <div class="flip-unit">
-                    <div class="flip-card"><span class="flip-num">{days:02d}</span></div>
+                    <div class="flip-card"><span class="flip-num" id="fc-days">--</span></div>
                     <span class="flip-lbl">DAYS</span>
                 </div>
                 <div class="flip-sep">:</div>
                 <div class="flip-unit">
-                    <div class="flip-card"><span class="flip-num">{hours:02d}</span></div>
+                    <div class="flip-card"><span class="flip-num" id="fc-hours">--</span></div>
                     <span class="flip-lbl">HRS</span>
                 </div>
                 <div class="flip-sep">:</div>
                 <div class="flip-unit">
-                    <div class="flip-card"><span class="flip-num">{minutes:02d}</span></div>
+                    <div class="flip-card"><span class="flip-num" id="fc-mins">--</span></div>
                     <span class="flip-lbl">MIN</span>
                 </div>
                 <div class="flip-sep">:</div>
                 <div class="flip-unit">
-                    <div class="flip-card"><span class="flip-num">{seconds:02d}</span></div>
+                    <div class="flip-card"><span class="flip-num" id="fc-secs">--</span></div>
                     <span class="flip-lbl">SEC</span>
                 </div>
             </div>
+            <script>
+            (function() {{
+                var target = {race_ts};
+                function pad(n) {{ return n < 10 ? '0' + n : '' + n; }}
+                function tick() {{
+                    var diff = Math.max(0, Math.floor((target - Date.now()) / 1000));
+                    var d = Math.floor(diff / 86400);
+                    var h = Math.floor((diff % 86400) / 3600);
+                    var m = Math.floor((diff % 3600) / 60);
+                    var s = diff % 60;
+                    var ed = document.getElementById('fc-days');
+                    var eh = document.getElementById('fc-hours');
+                    var em = document.getElementById('fc-mins');
+                    var es = document.getElementById('fc-secs');
+                    if (ed) ed.textContent = pad(d);
+                    if (eh) eh.textContent = pad(h);
+                    if (em) em.textContent = pad(m);
+                    if (es) es.textContent = pad(s);
+                }}
+                tick();
+                setInterval(tick, 1000);
+            }})();
+            </script>
             <div style="height:1px;background:#141414;margin:18px 0"></div>
         </div>
         """, unsafe_allow_html=True)
@@ -597,11 +600,11 @@ with st.sidebar:
 
     # Sidebar footer
     st.markdown("""
-    <div style="padding:28px 24px 24px;margin-top:auto;border-top:1px solid #0f0f0f;position:absolute;bottom:0;left:0;right:0">
-        <div style="text-align:center;font-size:10px;color:#2a2a2a;letter-spacing:0.12em;line-height:2.4">
+    <div style="padding:28px 24px 24px;margin-top:32px;border-top:1px solid #0f0f0f">
+        <div style="text-align:center;font-size:10px;color:#333;letter-spacing:0.12em;line-height:2.4">
             FastF1 · scikit-learn · Streamlit<br>
             <span style="color:#E8002D;font-size:13px">♥</span>
-            <span style="letter-spacing:0.2em"> MADE WITH LOVE BY ARIN</span>
+            <span style="letter-spacing:0.2em;color:#333"> MADE WITH LOVE BY ARIN</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -637,23 +640,24 @@ if "Race Strategy" in page:
     ].copy()
 
     if not driver_laps.empty:
-        team = driver_laps['Team'].iloc[0] if 'Team' in driver_laps.columns else 'Unknown'
-        tc   = TEAM_COLORS.get(team, '#E8002D')
-        best = driver_laps['LapTimeSec'].min()
-        m, s = int(best//60), best%60
+        team    = driver_laps['Team'].iloc[0] if 'Team' in driver_laps.columns else 'Unknown'
+        tc      = TEAM_COLORS.get(team, '#E8002D')
+        best    = driver_laps['LapTimeSec'].min()
+        m, s    = int(best//60), best%60
         avg_deg = driver_laps['DeltaFromFastest'].mean()
 
-        m1,m2,m3,m4 = st.columns(4)
-        with m1: st.metric("TOTAL LAPS",     int(driver_laps['LapNumber'].max()))
-        with m2: st.metric("FASTEST LAP",    f"{m}:{s:06.3f}")
-        with m3: st.metric("AVG DEGRADATION",f"+{avg_deg:.2f}s")
-        with m4: st.metric("TEAM",           team)
+        m1, m2, m3, m4 = st.columns(4)
+        with m1: st.metric("TOTAL LAPS",      int(driver_laps['LapNumber'].max()))
+        with m2: st.metric("FASTEST LAP",     f"{m}:{s:06.3f}")
+        with m3: st.metric("AVG DEGRADATION", f"+{avg_deg:.2f}s")
+        with m4: st.metric("TEAM",            team)
 
         st.markdown('<div class="dim-rule"></div>', unsafe_allow_html=True)
 
-        # Lap time chart
         y_min = driver_laps['LapTimeSec'].min() * 0.985
         y_max = driver_laps['LapTimeSec'].max() * 1.015
+        yax   = ax('Lap Time (s)')
+        yax['range'] = [y_min, y_max]
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
@@ -665,20 +669,17 @@ if "Race Strategy" in page:
             name=DRIVER_NAMES.get(selected_driver, selected_driver),
             hovertemplate='Lap %{x}: %{y:.3f}s<extra></extra>'
         ))
-        yax = ax('Lap Time (s)')
-        yax['range'] = [y_min, y_max]
         fig.update_layout(
             **PLOT_BASE,
             title=dict(
                 text=f'{DRIVER_NAMES.get(selected_driver,selected_driver).upper()}  ·  {selected_race}  ·  LAP TIME PROGRESSION',
-                font=dict(size=11, color='#444', family='monospace'), x=0
+                font=dict(size=11, color='#555', family='monospace'), x=0
             ),
             height=360, hovermode='x unified',
             xaxis=ax('Lap Number'), yaxis=yax
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Tire degradation
         st.markdown('<div class="dim-rule"></div>', unsafe_allow_html=True)
         st.markdown('<div class="section-eyebrow">TIRE DEGRADATION MODEL</div>', unsafe_allow_html=True)
 
@@ -687,8 +688,8 @@ if "Race Strategy" in page:
         if os.path.exists(tire_model_path):
             tire_model = joblib.load(tire_model_path)
         else:
-            all_models  = [f for f in os.listdir('models/') if f.startswith('tire_deg_')]
-            race_clean  = selected_race.lower().replace(' ','').replace('_','')
+            all_models = [f for f in os.listdir('models/') if f.startswith('tire_deg_')]
+            race_clean = selected_race.lower().replace(' ','').replace('_','')
             for mf in all_models:
                 mf_clean = mf.lower().replace('tire_deg_','').replace('.pkl','').replace('_','')
                 if race_clean[:5] in mf_clean or mf_clean[:5] in race_clean:
@@ -708,9 +709,9 @@ if "Race Strategy" in page:
                     tire_model = m_tmp
 
         if tire_model:
-            tire_ages  = np.arange(1,46)
-            comp_map   = {'SOFT':0,'MEDIUM':1,'HARD':2}
-            comp_colors= {'SOFT':'#E8002D','MEDIUM':'#EF9F27','HARD':'#888780'}
+            tire_ages   = np.arange(1, 46)
+            comp_map    = {'SOFT':0,'MEDIUM':1,'HARD':2}
+            comp_colors = {'SOFT':'#E8002D','MEDIUM':'#EF9F27','HARD':'#888780'}
             fig2 = go.Figure()
             for comp, cnum in comp_map.items():
                 X_pred = pd.DataFrame({'TyreLife':tire_ages,'TireLifeSq':tire_ages**2,
@@ -722,10 +723,11 @@ if "Race Strategy" in page:
                     hovertemplate=f'{comp} · Lap %{{x}}: +%{{y:.2f}}s<extra></extra>'
                 ))
             fig2.update_layout(**PLOT_BASE, height=300,
-                               xaxis=ax('Tire Age (laps)'), yaxis=ax('Delta from fastest (s)'))
+                               xaxis=ax('Tire Age (laps)'),
+                               yaxis=ax('Delta from fastest (s)'))
             st.plotly_chart(fig2, use_container_width=True)
         else:
-            st.markdown('<div style="color:#444;font-size:12px;padding:1rem 0">Insufficient data for tire model on this circuit.</div>',
+            st.markdown('<div style="color:#555;font-size:12px;padding:1rem 0">Insufficient data for tire model on this circuit.</div>',
                         unsafe_allow_html=True)
     else:
         st.warning("No data available for this combination.")
@@ -774,7 +776,7 @@ elif "Driver DNA" in page:
     v2   = [round(d2r[c],1) for c in nc]+[round(d2r[nc[0]],1)]
     catc = cats+[cats[0]]
 
-    t1  = d1r['team']; t2 = d2r['team']
+    t1  = d1r['team'];  t2  = d2r['team']
     c1c = TEAM_COLORS.get(t1,'#E8002D')
     c2c = TEAM_COLORS.get(t2,'#378ADD')
 
@@ -804,12 +806,12 @@ elif "Driver DNA" in page:
                     tickfont=dict(color='#222',size=8),
                     gridcolor='#111', linecolor='#111'),
                 angularaxis=dict(
-                    tickfont=dict(color='#888',size=11,family='monospace'),
+                    tickfont=dict(color='#999',size=11,family='monospace'),
                     gridcolor='#111', linecolor='#161616')
             ),
             paper_bgcolor='#080808',
             title=dict(text='DRIVING STYLE FINGERPRINT',
-                       font=dict(size=11,color='#333',family='monospace'),x=0.5,xanchor='center'),
+                       font=dict(size=11,color='#444',family='monospace'),x=0.5,xanchor='center'),
             legend=dict(bgcolor='rgba(8,8,8,0.95)',bordercolor='#141414',borderwidth=1,
                         font=dict(color='#888',size=11,family='monospace'),
                         x=0.5,y=-0.07,xanchor='center',orientation='h'),
@@ -820,10 +822,10 @@ elif "Driver DNA" in page:
 
     with col_s:
         for drv, chex in [(driver1,c1c),(driver2,c2c)]:
-            d_raw    = driver_dna[driver_dna['driver']==drv].iloc[0]
-            fullname = DRIVER_NAMES.get(drv, drv)
-            archetype= d_raw.get('archetype','Unknown')
-            if not isinstance(archetype,str): archetype='Unknown'
+            d_raw     = driver_dna[driver_dna['driver']==drv].iloc[0]
+            fullname  = DRIVER_NAMES.get(drv, drv)
+            archetype = d_raw.get('archetype','Unknown')
+            if not isinstance(archetype,str): archetype = 'Unknown'
             st.markdown(f"""
             <div class="driver-card" style="border-top:2px solid {chex}">
                 <div class="driver-card-name" style="color:{chex}">{fullname.upper()}</div>
@@ -867,7 +869,7 @@ elif "Driver DNA" in page:
         st.markdown("</div>", unsafe_allow_html=True)
 
     if load_tel:
-        with st.spinner(f"Loading {tel_race} {tel_year} Q telemetry..."):
+        with st.spinner(f"Loading {tel_race} {tel_year} qualifying telemetry..."):
             try:
                 from scipy.interpolate import interp1d
                 sess = fastf1.get_session(tel_year, tel_race, 'Q')
@@ -917,20 +919,20 @@ elif "Driver DNA" in page:
 
                     for row in [1,2]:
                         fig_t.update_xaxes(gridcolor='#0f0f0f',zerolinecolor='#111',
-                                           tickfont=dict(color='#444',size=9),row=row,col=1)
+                                           tickfont=dict(color='#555',size=9),row=row,col=1)
                         fig_t.update_yaxes(gridcolor='#0f0f0f',zerolinecolor='#111',
-                                           tickfont=dict(color='#444',size=9),row=row,col=1)
+                                           tickfont=dict(color='#555',size=9),row=row,col=1)
                     fig_t.update_yaxes(title_text='Speed (km/h)',
-                                       title_font=dict(color='#555',size=10,family='monospace'),row=1,col=1)
+                                       title_font=dict(color='#666',size=10,family='monospace'),row=1,col=1)
                     fig_t.update_yaxes(title_text='Δ Speed',
-                                       title_font=dict(color='#555',size=10,family='monospace'),row=2,col=1)
+                                       title_font=dict(color='#666',size=10,family='monospace'),row=2,col=1)
                     fig_t.update_xaxes(title_text='Distance (m)',
-                                       title_font=dict(color='#555',size=10,family='monospace'),row=2,col=1)
+                                       title_font=dict(color='#666',size=10,family='monospace'),row=2,col=1)
                     fig_t.update_layout(
                         **PLOT_BASE,
                         title=dict(
                             text=f'{tel_race.upper()} {tel_year}  ·  QUALIFYING  ·  {driver1} vs {driver2}',
-                            font=dict(size=12,color='#444',family='monospace'),x=0.5,xanchor='center'
+                            font=dict(size=12,color='#555',family='monospace'),x=0.5,xanchor='center'
                         ),
                         height=600,hovermode='x unified'
                     )
@@ -976,7 +978,7 @@ elif "Strategy Simulator" in page:
     prob     = strategy_model.predict_proba(feat)[0][1]
     decision = "PIT NOW" if prob >= 0.5 else "STAY OUT"
     dc       = "#E8002D" if prob >= 0.5 else "#1D9E75"
-    tc_team  = TEAM_COLORS.get(sim_team, '#E8002D')
+    tc_team  = TEAM_COLORS.get(sim_team,'#E8002D')
 
     rc1, rc2, rc3 = st.columns([1,1,1])
 
@@ -995,18 +997,18 @@ elif "Strategy Simulator" in page:
         fig_g = go.Figure(go.Indicator(
             mode="gauge+number",
             value=prob*100,
-            title=dict(text="PIT PROBABILITY",font=dict(color='#444',size=10,family='monospace')),
+            title=dict(text="PIT PROBABILITY",font=dict(color='#555',size=10,family='monospace')),
             number=dict(suffix="%",font=dict(color='#fff',size=26,family='monospace')),
             gauge=dict(
-                axis=dict(range=[0,100],tickfont=dict(color='#222',size=8),tickcolor='#111'),
-                bar=dict(color=dc, thickness=0.55),
+                axis=dict(range=[0,100],tickfont=dict(color='#333',size=8),tickcolor='#111'),
+                bar=dict(color=dc,thickness=0.55),
                 bgcolor='#0a0a0a',bordercolor='#111',borderwidth=1,
                 steps=[
                     dict(range=[0,35],  color='#0a120a'),
                     dict(range=[35,65], color='#12120a'),
                     dict(range=[65,100],color='#120a0a'),
                 ],
-                threshold=dict(line=dict(color='#333',width=1.5),thickness=0.7,value=50)
+                threshold=dict(line=dict(color='#444',width=1.5),thickness=0.7,value=50)
             )
         ))
         fig_g.update_layout(
@@ -1025,15 +1027,23 @@ elif "Strategy Simulator" in page:
         st.markdown(f"""
         <div class="analysis-box" style="border-top:2px solid {mc}">
             <div class="section-eyebrow">STRATEGY ANALYSIS</div>
-            <div style="font-size:12px;color:#666;line-height:1.8;margin-bottom:1.25rem">{msg}</div>
-            <div class="stat-row"><span class="stat-label">Tire age</span>
-                                  <span class="stat-value">{sim_tire} laps</span></div>
-            <div class="stat-row"><span class="stat-label">Compound</span>
-                                  <span class="stat-value">{sim_comp}</span></div>
-            <div class="stat-row"><span class="stat-label">Position</span>
-                                  <span class="stat-value">P{sim_pos}</span></div>
-            <div class="stat-row"><span class="stat-label">Race progress</span>
-                                  <span class="stat-value">{sim_prog}%</span></div>
+            <div style="font-size:12px;color:#777;line-height:1.8;margin-bottom:1.25rem">{msg}</div>
+            <div class="stat-row">
+                <span class="stat-label">Tire age</span>
+                <span class="stat-value">{sim_tire} laps</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Compound</span>
+                <span class="stat-value">{sim_comp}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Position</span>
+                <span class="stat-value">P{sim_pos}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Race progress</span>
+                <span class="stat-value">{sim_prog}%</span>
+            </div>
             <div class="stat-row" style="border-bottom:none">
                 <span class="stat-label">Laps remaining</span>
                 <span style="color:{tc_team};font-size:0.72rem">{sim_laps}</span>
@@ -1047,8 +1057,10 @@ elif "Strategy Simulator" in page:
 
     tire_ages = np.arange(1, 51)
     probs = [strategy_model.predict_proba(pd.DataFrame([{
-        'tire_age_at_pit': ta, 'compound_num': cmap[sim_comp],
-        'race_progress':   sim_prog/100, 'position_before': sim_pos/20,
+        'tire_age_at_pit': ta,
+        'compound_num':    cmap[sim_comp],
+        'race_progress':   sim_prog/100,
+        'position_before': sim_pos/20,
         'laps_remaining':  sim_laps
     }]))[0][1]*100 for ta in tire_ages]
 
@@ -1061,7 +1073,7 @@ elif "Strategy Simulator" in page:
     ))
     fig_s.add_hline(y=50, line=dict(color='#1a1a1a',width=1,dash='dash'),
                     annotation_text="THRESHOLD",
-                    annotation_font=dict(color='#444',size=9,family='monospace'))
+                    annotation_font=dict(color='#555',size=9,family='monospace'))
     fig_s.add_vline(x=sim_tire, line=dict(color='#EF9F27',width=1.5,dash='dot'),
                     annotation_text="NOW",
                     annotation_font=dict(color='#EF9F27',size=9,family='monospace'))
@@ -1080,16 +1092,16 @@ elif "Strategy Simulator" in page:
 # FOOTER
 # ─────────────────────────────────────────
 st.markdown("""
-<div class="footer-wrap">
-    <div style="font-family:'Bebas Neue',monospace;font-size:0.9rem;color:#1e1e1e;
-                letter-spacing:0.2em;margin-bottom:4px">F1 STRATEGY INTELLIGENCE SYSTEM</div>
-    <div style="font-size:0.62rem;color:#1a1a1a;letter-spacing:0.15em;margin-bottom:6px">
+<div style="margin-top:5rem;padding:2rem 0 1.5rem;border-top:1px solid #111;text-align:center">
+    <div style="font-family:'Bebas Neue',monospace;font-size:0.95rem;color:#2a2a2a;
+                letter-spacing:0.2em;margin-bottom:6px">F1 STRATEGY INTELLIGENCE SYSTEM</div>
+    <div style="font-size:0.65rem;color:#222;letter-spacing:0.15em;margin-bottom:8px">
         FastF1 · scikit-learn · Streamlit · Plotly · 2022–2026
     </div>
-    <div>
-        <span style="color:#E8002D;font-size:14px">♥</span>
-        <span style="font-size:0.62rem;color:#222;letter-spacing:0.2em;text-transform:uppercase">
-         &nbsp;Made with love by Arin
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px">
+        <span style="color:#E8002D;font-size:16px;line-height:1">♥</span>
+        <span style="font-size:0.68rem;color:#2a2a2a;letter-spacing:0.18em;text-transform:uppercase">
+            Made with love by Arin
         </span>
     </div>
 </div>
