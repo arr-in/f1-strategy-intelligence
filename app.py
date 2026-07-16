@@ -638,26 +638,17 @@ def load_qualy_speed_trace(year: int, race: str, d1: str, d2: str):
 # SIDEBAR
 # ─────────────────────────────────────────
 with st.sidebar:
+    # Logo via st.image — base64-in-markdown breaks Streamlit HTML rendering
+    if os.path.exists('f1_logo.png'):
+        st.markdown('<div style="padding:1.5rem 24px 0 24px">', unsafe_allow_html=True)
+        st.image('f1_logo.png', width=72)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # Brand mark — STRAT
-    logo_mark = ''
-    if LOGO_SRC:
-        logo_mark = f'''
-        <img src="{LOGO_SRC}" height="16"
-             style="opacity:0.9;filter:drop-shadow(0 0 8px rgba(225,6,0,0.4));
-                    object-fit:contain;display:block;margin-bottom:16px"/>
-        '''
-
-    st.markdown(f"""
-    <div style="padding:1.75rem 24px 0">
-        {logo_mark}
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:#fff;
-                    letter-spacing:0.28em;line-height:0.9;margin:0">STRAT</div>
-        <div style="margin-top:10px;font-size:0.52rem;color:#666;letter-spacing:0.18em;
-                    text-transform:uppercase;line-height:1.55;max-width:210px">
-            AI-powered Formula 1 Analytics
-        </div>
-        <div style="height:2px;width:42px;background:#E10600;margin:18px 0 16px"></div>
+    st.markdown("""
+    <div style="padding:0.6rem 24px 0">
+      <div style="font-family:Bebas Neue,sans-serif;font-size:2.6rem;color:#fff;letter-spacing:0.28em;line-height:0.9">STRAT</div>
+      <div style="margin-top:10px;font-size:0.52rem;color:#666;letter-spacing:0.16em;text-transform:uppercase;line-height:1.55;max-width:210px;font-family:DM Mono,monospace">AI-powered Formula 1 Analytics</div>
+      <div style="height:2px;width:42px;background:#E10600;margin:18px 0 16px"></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -851,19 +842,13 @@ with st.sidebar:
 if "Quali Lab" in page:
     import quali_lab as ql
 
-    st.markdown("""
-    <div class="strat-hero">
-      <div>
-        <div class="strat-hero-title">QUALI LAB</div>
-        <div class="strat-hero-sub">Broadcast telemetry · head-to-head · sector delta</div>
-      </div>
-      <div class="zone-legend">
-        <span class="zone-pill"><span class="zone-dot" style="background:#E10600"></span> High speed</span>
-        <span class="zone-pill"><span class="zone-dot" style="background:#FFEB00"></span> Medium</span>
-        <span class="zone-pill"><span class="zone-dot" style="background:#3A3A3A"></span> Low speed</span>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="strat-hero"><div>'
+        '<div class="strat-hero-title">QUALI LAB</div>'
+        '<div class="strat-hero-sub">Broadcast telemetry · head-to-head · sector delta</div>'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
 
     qc1, qc2, qc3, qc4 = st.columns([1, 1.2, 1.2, 0.8])
     with qc1:
@@ -908,56 +893,50 @@ if "Quali Lab" in page:
         else:
             gap1, gap2 = f"+{abs(gap):.3f}s", "LEADER"
 
-        # team colors from DNA when possible
-        def _team_color(code, fallback):
-            row = driver_dna[driver_dna["driver"] == code]
-            if not row.empty:
-                return TEAM_COLORS.get(row.iloc[0]["team"], fallback)
-            return fallback
-
-        c1 = _team_color(q_d1, ql.RED)
-        c2 = _team_color(q_d2, ql.YELLOW)
-        # ensure contrast if same team
-        if c1 == c2:
-            c2 = ql.YELLOW if c1 == ql.RED else ql.RED
+        # Unique differentiable theme colors per driver (NOT team colors)
+        c1, c2 = ql.pair_theme_colors(q_d1, q_d2)
 
         team1 = driver_dna[driver_dna["driver"] == q_d1]["team"].iloc[0] if not driver_dna[driver_dna["driver"] == q_d1].empty else "—"
         team2 = driver_dna[driver_dna["driver"] == q_d2]["team"].iloc[0] if not driver_dna[driver_dna["driver"] == q_d2].empty else "—"
 
         pos1, pos2 = (1, 2) if t1s <= t2s else (2, 1)
 
+        n1 = DRIVER_NAMES.get(q_d1, q_d1)
+        n2 = DRIVER_NAMES.get(q_d2, q_d2)
+        st.markdown(
+            f'<div class="zone-legend" style="margin:0 0 14px">'
+            f'<span class="zone-pill"><span class="zone-dot" style="background:{c1}"></span>{n1}</span>'
+            f'<span class="zone-pill"><span class="zone-dot" style="background:{c2}"></span>{n2}</span>'
+            f'<span style="color:#555;letter-spacing:0.14em">MAP = FASTER DRIVER</span></div>',
+            unsafe_allow_html=True,
+        )
+
         left, mid, right = st.columns([1.15, 1.0, 1.15])
         with left:
-            st.markdown(
+            components.html(
                 ql.build_driver_card_html(
-                    pos1, q_d1, DRIVER_NAMES.get(q_d1, q_d1), team1, t1s, gap1,
-                    ft1, hb1, cnr1, c1, align="left",
+                    pos1, q_d1, n1, team1, t1s, gap1, ft1, hb1, cnr1, c1, align="left",
                 ),
-                unsafe_allow_html=True,
+                height=320, scrolling=False,
             )
         with mid:
             track = ql.load_track_outline(q_year, q_race)
             map_fig = ql.build_circuit_map(
-                track, cd, (s1 + s2) / 2.0, c1, c2,
+                track, cd, s1, s2, c1, c2,
                 f"{q_race.upper()}  ·  TRACK MAP",
             )
             st.plotly_chart(map_fig, use_container_width=True, config={"displayModeBar": False})
         with right:
-            st.markdown(
+            components.html(
                 ql.build_driver_card_html(
-                    pos2, q_d2, DRIVER_NAMES.get(q_d2, q_d2), team2, t2s, gap2,
-                    ft2, hb2, cnr2, c2, align="right",
+                    pos2, q_d2, n2, team2, t2s, gap2, ft2, hb2, cnr2, c2, align="right",
                 ),
-                unsafe_allow_html=True,
+                height=320, scrolling=False,
             )
 
-        st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         fig = ql.build_speed_delta_figure(
-            cd, s1, s2,
-            DRIVER_NAMES.get(q_d1, q_d1),
-            DRIVER_NAMES.get(q_d2, q_d2),
-            c1, c2,
-            f"{q_race} {q_year}",
+            cd, s1, s2, n1, n2, c1, c2, f"{q_race} {q_year}",
         )
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
