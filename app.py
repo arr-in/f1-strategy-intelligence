@@ -237,9 +237,11 @@ button[kind="headerNoPadding"],
     align-items: center !important;
     padding: 12px 24px !important;
     border-left: 2px solid transparent !important;
-    color: #888 !important;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.1em !important;
+    color: #8a8d98 !important;
+    font-family: 'Bebas Neue', sans-serif !important;
+    font-size: 1.15rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
     cursor: pointer !important;
     transition: all 0.15s ease !important;
@@ -248,9 +250,9 @@ button[kind="headerNoPadding"],
     background: transparent !important;
 }
 [data-testid="stSidebar"] .stRadio label:hover {
-    color: #bbbbbb !important;
+    color: #ffffff !important;
     border-left-color: #444 !important;
-    background: rgba(255,255,255,0.025) !important;
+    background: rgba(255,255,255,0.02) !important;
 }
 [data-testid="stSidebar"] .stRadio label:has(input:checked) {
     color: #ffffff !important;
@@ -275,10 +277,14 @@ button[kind="headerNoPadding"],
     right: 0;
     bottom: 0;
     z-index: 999;
-    background: rgba(6,6,6,0.92);
+    background: rgba(11,11,11,0.95) !important;
     backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 0.8rem 1rem 0.7rem;
+    border-top: 1px solid #141414 !important;
+    padding: 0.6rem 2.75rem 0.5rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
 }
 .app-footer .title {
     font-family:'Bebas Neue', monospace;
@@ -893,13 +899,10 @@ with st.sidebar:
 
     # Sidebar footer
     st.markdown("""
-    <div style="padding:28px 24px 24px;margin-top:32px;border-top:1px solid #0f0f0f">
-        <div style="text-align:center;font-size:10px;color:#3a3a3a;letter-spacing:0.18em;line-height:2.2">
-            FastF1 · scikit-learn · Streamlit<br>
-            <span style="color:#8a8d98;font-size:10px;font-family:'Inter',sans-serif;margin-top:10px;display:block;letter-spacing:normal;line-height:1.5;">
-                Built for the <span style="color:#E10600">❤️</span> of Formula 1.<br>
-                <span style="letter-spacing:0.1em;font-weight:700;color:#ffffff;font-size:9px;">— ARIN</span>
-            </span>
+    <div style="padding:28px 24px 24px;margin-top:32px;border-top:1px solid #141414">
+        <div style="text-align:center;font-size:10px;color:#515462;letter-spacing:0.05em;line-height:1.6;font-family:'Inter',sans-serif;">
+            Built for the <svg viewBox="0 0 24 24" style="width: 10px; height: 10px; fill: #E10600; display: inline-block; vertical-align: middle; margin: -2px 2px 0 2px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> of Formula 1.<br>
+            <span style="font-weight: 700; color: #8a8d98; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; display: block;">— Arin</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -976,16 +979,17 @@ if "Quali Lab" in page:
                     break
                 except Exception:
                     pass
-        st.markdown(f"""
-        <div style="background: #15161d; border-radius: 4px; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 6px solid #E10600;">
-            <div style="display: flex; align-items: center;">
-                {header_logo_html}
-                <h1 style="margin: 0; font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; font-weight: 900; color: #ffffff; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1;">
-                    {circuit_upper} - QUALIFYING ANALYSIS
-                </h1>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="background: #15161d; border-radius: 4px; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 6px solid #E10600;">'
+            f'<div style="display: flex; align-items: center;">'
+            f'{header_logo_html}'
+            f'<h1 style="margin: 0; font-family: \'Bebas Neue\', sans-serif; font-size: 1.8rem; font-weight: 900; color: #ffffff; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1;">'
+            f'{circuit_upper} - QUALIFYING ANALYSIS'
+            f'</h1>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
         st.markdown(
             f'<div class="zone-legend" style="margin:0 0 14px">'
@@ -1518,11 +1522,17 @@ elif "Strategy Simulator" in page:
 # ─────────────────────────────────────────
 st.markdown("""
 <div class="app-footer">
-  <div class="title">STRAT</div>
-  <div class="sub">AI-powered Formula 1 Analytics · FastF1 · scikit-learn · Streamlit · Plotly</div>
-  <div class="love" style="font-family:'Inter', sans-serif; font-size:0.65rem; color:#8a8d98; letter-spacing:0.05em; line-height:1.6; text-transform:none; margin-top:8px;">
-    Built for the <span style="color:#E10600">❤️</span> of Formula 1.<br>
-    <span style="letter-spacing:0.1em;font-weight:700;color:#ffffff;font-size:0.58rem;">— ARIN</span>
+  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1480px; margin: 0 auto; flex-wrap: wrap; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <span style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; font-weight: 900; letter-spacing: 0.05em; color: #515462;">STRAT</span>
+      <span style="font-family: 'Inter', sans-serif; font-size: 0.62rem; color: #3a3d46; letter-spacing: 0.05em; text-transform: uppercase;">AI-powered Formula 1 Analytics · FastF1 · scikit-learn · Streamlit · Plotly</span>
+    </div>
+    <div style="font-family: 'Inter', sans-serif; font-size: 0.65rem; color: #8a8d98; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px;">
+      <span>Built for the</span>
+      <svg viewBox="0 0 24 24" style="width: 10px; height: 10px; fill: #E10600; display: inline-block; vertical-align: middle; margin: 0 1px 0 2px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      <span>of Formula 1.</span>
+      <span style="font-weight: 700; color: #bbbbbb; margin-left: 6px; text-transform: uppercase;">— Arin</span>
+    </div>
   </div>
 </div>
 """, unsafe_allow_html=True)
