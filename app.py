@@ -690,23 +690,46 @@ with st.sidebar:
             }}
             .flip-unit {{ display: flex; flex-direction: column; align-items: center; }}
             .flip-card {{
+                perspective: 1000px;
+                width: 100%;
+                height: 48px;
+                position: relative;
+            }}
+            .flip-card-inner {{
+                position: relative;
+                width: 100%;
+                height: 100%;
+                transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+                transform-style: preserve-3d;
+            }}
+            .flip-card-inner.flipped {{
+                transform: rotateX(180deg);
+            }}
+            .flip-card-front, .flip-card-back {{
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                backface-visibility: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 background: linear-gradient(180deg, #161616 0%, #111 49%, #0d0d0d 51%, #161616 100%);
                 border: 1px solid #222;
                 border-top: 2px solid #E8002D;
                 border-radius: 4px;
-                width: 100%;
-                padding: 10px 4px 8px;
-                text-align: center;
-                position: relative;
                 box-shadow: 0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03);
+                box-sizing: border-box;
             }}
-            .flip-card::after {{
+            .flip-card-front::after, .flip-card-back::after {{
                 content: '';
                 position: absolute;
                 left: 0; right: 0; top: 50%;
                 height: 1px;
                 background: rgba(0,0,0,0.9);
                 z-index: 2;
+            }}
+            .flip-card-back {{
+                transform: rotateX(180deg);
             }}
             .flip-num {{
                 font-family: 'Bebas Neue', monospace;
@@ -741,22 +764,42 @@ with st.sidebar:
             <div class="next-race-name">{race_name}</div>
             <div class="flip-clock-wrap">
                 <div class="flip-unit">
-                    <div class="flip-card"><span class="flip-num" id="fc-days">--</span></div>
+                    <div class="flip-card" id="fc-days">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front"><span class="flip-num">--</span></div>
+                            <div class="flip-card-back"><span class="flip-num">--</span></div>
+                        </div>
+                    </div>
                     <span class="flip-lbl">DAYS</span>
                 </div>
                 <div class="flip-sep">:</div>
                 <div class="flip-unit">
-                    <div class="flip-card"><span class="flip-num" id="fc-hours">--</span></div>
+                    <div class="flip-card" id="fc-hours">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front"><span class="flip-num">--</span></div>
+                            <div class="flip-card-back"><span class="flip-num">--</span></div>
+                        </div>
+                    </div>
                     <span class="flip-lbl">HRS</span>
                 </div>
                 <div class="flip-sep">:</div>
                 <div class="flip-unit">
-                    <div class="flip-card"><span class="flip-num" id="fc-mins">--</span></div>
+                    <div class="flip-card" id="fc-mins">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front"><span class="flip-num">--</span></div>
+                            <div class="flip-card-back"><span class="flip-num">--</span></div>
+                        </div>
+                    </div>
                     <span class="flip-lbl">MIN</span>
                 </div>
                 <div class="flip-sep">:</div>
                 <div class="flip-unit">
-                    <div class="flip-card"><span class="flip-num" id="fc-secs">--</span></div>
+                    <div class="flip-card" id="fc-secs">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front"><span class="flip-num">--</span></div>
+                            <div class="flip-card-back"><span class="flip-num">--</span></div>
+                        </div>
+                    </div>
                     <span class="flip-lbl">SEC</span>
                 </div>
             </div>
@@ -766,20 +809,43 @@ with st.sidebar:
         (function() {{
             var target = {race_ts};
             function pad(n) {{ return n < 10 ? '0' + n : '' + n; }}
+            function updateUnit(cardId, value) {{
+                var cardEl = document.getElementById(cardId);
+                if (!cardEl) return;
+                var inner = cardEl.querySelector('.flip-card-inner');
+                var frontNum = cardEl.querySelector('.flip-card-front .flip-num');
+                var backNum = cardEl.querySelector('.flip-card-back .flip-num');
+                
+                var currentValue = cardEl.getAttribute('data-value');
+                if (currentValue === value) return;
+                cardEl.setAttribute('data-value', value);
+                
+                if (!currentValue) {{
+                    frontNum.textContent = value;
+                    backNum.textContent = value;
+                    return;
+                }}
+                
+                var isFrontActive = !inner.classList.contains('flipped');
+                if (isFrontActive) {{
+                    backNum.textContent = value;
+                    inner.classList.add('flipped');
+                }} else {{
+                    frontNum.textContent = value;
+                    inner.classList.remove('flipped');
+                }}
+            }}
             function tick() {{
                 var diff = Math.max(0, Math.floor((target - Date.now()) / 1000));
                 var d = Math.floor(diff / 86400);
                 var h = Math.floor((diff % 86400) / 3600);
                 var m = Math.floor((diff % 3600) / 60);
                 var s = diff % 60;
-                var ed = document.getElementById('fc-days');
-                var eh = document.getElementById('fc-hours');
-                var em = document.getElementById('fc-mins');
-                var es = document.getElementById('fc-secs');
-                if (ed) ed.textContent = pad(d);
-                if (eh) eh.textContent = pad(h);
-                if (em) em.textContent = pad(m);
-                if (es) es.textContent = pad(s);
+                
+                updateUnit('fc-days', pad(d));
+                updateUnit('fc-hours', pad(h));
+                updateUnit('fc-mins', pad(m));
+                updateUnit('fc-secs', pad(s));
             }}
             tick();
             setInterval(tick, 1000);
