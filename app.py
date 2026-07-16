@@ -638,13 +638,18 @@ def load_qualy_speed_trace(year: int, race: str, d1: str, d2: str):
 # SIDEBAR
 # ─────────────────────────────────────────
 with st.sidebar:
-    # Brand lockup image (replaces old F1 mark + STRAT text block)
-    if os.path.exists('strat_logo.png'):
-        st.markdown('<div style="padding:1.25rem 20px 0.5rem 20px">', unsafe_allow_html=True)
-        st.image('strat_logo.png', use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    elif os.path.exists('f1_logo.png'):
-        st.image('f1_logo.png', width=72)
+    # Premium typography logo for the sidebar header
+    st.markdown("""
+    <div style="padding: 1.8rem 24px 1.2rem 24px; font-family: 'Bebas Neue', sans-serif; border-bottom: 1px solid #141414; margin-bottom: 15px; background: linear-gradient(180deg, rgba(225,6,0,0.03) 0%, transparent 100%);">
+        <div style="display: flex; align-items: baseline; gap: 8px;">
+            <span style="font-size: 2.8rem; font-weight: 900; letter-spacing: 0.05em; color: #ffffff; font-style: italic; line-height: 0.9;">STRAT</span>
+            <span style="font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 900; background: #E10600; color: #ffffff; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.05em; font-style: normal; transform: translateY(-4px);">AI</span>
+        </div>
+        <div style="font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 800; color: #515462; letter-spacing: 0.35em; text-transform: uppercase; margin-top: 2px; line-height: 1;">
+            F1 ANALYTICS
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Real-time flip clock — must use components.html so JS runs
     # (st.markdown strips <script> tags)
@@ -891,7 +896,10 @@ with st.sidebar:
     <div style="padding:28px 24px 24px;margin-top:32px;border-top:1px solid #0f0f0f">
         <div style="text-align:center;font-size:10px;color:#3a3a3a;letter-spacing:0.18em;line-height:2.2">
             FastF1 · scikit-learn · Streamlit<br>
-            <span style="color:#666;letter-spacing:0.28em">ENGINEERED BY ARIN</span>
+            <span style="color:#8a8d98;font-size:10px;font-family:'Inter',sans-serif;margin-top:10px;display:block;letter-spacing:normal;line-height:1.5;">
+                Built for the <span style="color:#E10600">❤️</span> of Formula 1.<br>
+                <span style="letter-spacing:0.1em;font-weight:700;color:#ffffff;font-size:9px;">— ARIN</span>
+            </span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -956,31 +964,25 @@ if "Quali Lab" in page:
         n1 = DRIVER_NAMES.get(q_d1, q_d1)
         n2 = DRIVER_NAMES.get(q_d2, q_d2)
 
-        # F1 TV Style Header
+        # F1 TV Style Header (Customized to remove F1 & AWS marks per user request)
         circuit_upper = q_race.upper().replace("_", " ")
+        header_logo_html = ""
+        for p in ["header_logo.png", "logos/header_logo.png", "data/logos/header_logo.png"]:
+            if os.path.exists(p):
+                try:
+                    with open(p, "rb") as f:
+                        h_data = base64.b64encode(f.read()).decode()
+                    header_logo_html = f'<img src="data:image/png;base64,{h_data}" style="height: 25px; object-fit: contain; margin-right: 15px; display: block;" /><div style="width: 1px; height: 20px; background: #222530; margin-right: 15px;"></div>'
+                    break
+                except Exception:
+                    pass
         st.markdown(f"""
-        <div style="background: #15161d; border-radius: 4px; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 6px solid #E10600;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <!-- F1 Logo -->
-                <svg viewBox="0 0 120 30" width="80" height="20" style="display: block;">
-                    <path d="M 15 5 L 35 5 L 25 25 L 15 25 Z" fill="#E10600"/>
-                    <path d="M 38 5 L 58 5 L 56 9 L 45 9 L 43 13 L 53 13 L 51 17 L 41 17 L 39 21 L 51 21 L 49 25 L 29 25 Z" fill="#E10600"/>
-                    <path d="M 60 5 C 65 5, 75 5, 75 12 C 75 18, 68 25, 60 25 M 65 5 L 60 25 M 58 25" fill="none" stroke="#E10600" stroke-width="4" stroke-linecap="round"/>
-                </svg>
-                <div style="width: 1px; height: 20px; background: #222530;"></div>
+        <div style="background: #15161d; border-radius: 4px; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 6px solid #E10600;">
+            <div style="display: flex; align-items: center;">
+                {header_logo_html}
                 <h1 style="margin: 0; font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; font-weight: 900; color: #ffffff; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1;">
                     {circuit_upper} - QUALIFYING ANALYSIS
                 </h1>
-            </div>
-            <div>
-                <!-- AWS Logo -->
-                <div style="display: flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 0.65rem; color: #8a8d98; font-weight: 600; text-transform: lowercase;">
-                    <span>powered by</span>
-                    <svg viewBox="0 0 40 24" width="28" height="16" fill="#fff" style="margin-top: 2px;">
-                        <path d="M12.5 13.5c0 1.2-.6 1.9-1.6 1.9-.8 0-1.3-.5-1.5-1.1-.5.7-1.2 1.3-2.2 1.3-1.6 0-2.6-1.1-2.6-2.6 0-2.3 2-3.1 4.5-3.1V9.5c0-.9-.4-1.3-1.3-1.3-.8 0-1.4.3-1.6.8l-1.3-.8c.6-1.1 1.7-1.6 3.1-1.6 2 0 3 1.1 3 2.9v4.2zm-5.3-.2c0 .8.5 1.3 1.2 1.3.8 0 1.4-.6 1.6-1.3v-1.1c-1.6 0-2.8.3-2.8 1.1zM23.1 7.2l1.6 5.8 1.6-5.8h1.8l-2.5 7.8h-1.8L22.2 9l-1.6 6h-1.8l-2.5-7.8h1.8l1.6 5.8 1.6-5.8h1.8zm11 1.8c-.8 0-1.3.3-1.5.8L31.3 9c.6-1.1 1.7-1.6 3.1-1.6 1.8 0 2.8.9 2.8 2.3v3.8c0 1 .1 1.4.3 1.7h-1.8c-.1-.3-.2-.7-.2-1-.5.7-1.2 1.3-2.2 1.3-1.5 0-2.5-1-2.5-2.4 0-1.8 1.4-2.6 3.7-2.6h1v-.5c0-.8-.4-1.2-1.2-1.2zm-.3 4.2c.7 0 1.2-.5 1.4-1.2v-.6h-.8c-1.3 0-1.9.4-1.9 1.2 0 .8.5 1.2 1.3 1.2z" fill="#ffffff"/>
-                        <path d="M6 18c6 2.5 15 4 25 1" fill="none" stroke="#FF9900" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1518,6 +1520,9 @@ st.markdown("""
 <div class="app-footer">
   <div class="title">STRAT</div>
   <div class="sub">AI-powered Formula 1 Analytics · FastF1 · scikit-learn · Streamlit · Plotly</div>
-  <div class="love" style="letter-spacing:0.28em">ENGINEERED BY ARIN</div>
+  <div class="love" style="font-family:'Inter', sans-serif; font-size:0.65rem; color:#8a8d98; letter-spacing:0.05em; line-height:1.6; text-transform:none; margin-top:8px;">
+    Built for the <span style="color:#E10600">❤️</span> of Formula 1.<br>
+    <span style="letter-spacing:0.1em;font-weight:700;color:#ffffff;font-size:0.58rem;">— ARIN</span>
+  </div>
 </div>
 """, unsafe_allow_html=True)

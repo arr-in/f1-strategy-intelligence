@@ -181,6 +181,55 @@ def _bar_html(label: str, pct: float, color: str) -> str:
     </div>
     """
 
+def get_team_logo_html(team: str, color: str) -> str:
+    team_lower = team.lower()
+    
+    # Map team name to filename key
+    if 'ferrari' in team_lower:
+        logo_key = 'ferrari'
+    elif 'mercedes' in team_lower:
+        logo_key = 'mercedes'
+    elif 'red bull' in team_lower:
+        logo_key = 'red_bull_racing'
+    elif 'mclaren' in team_lower:
+        logo_key = 'mclaren'
+    elif 'aston martin' in team_lower:
+        logo_key = 'aston_martin'
+    elif 'alpine' in team_lower:
+        logo_key = 'alpine'
+    elif 'williams' in team_lower:
+        logo_key = 'williams'
+    elif 'haas' in team_lower:
+        logo_key = 'haas'
+    elif 'sauber' in team_lower or 'alfa romeo' in team_lower:
+        logo_key = 'sauber'
+    elif 'alphatauri' in team_lower or 'rb' in team_lower or 'bulls' in team_lower:
+        logo_key = 'rb'
+    else:
+        logo_key = team_lower.replace(" ", "_")
+        
+    # Check paths in root or logos/ directory
+    paths = [
+        f"logos/{logo_key}.png",
+        f"logos/{logo_key}.jpg",
+        f"data/logos/{logo_key}.png",
+        f"{logo_key}.png"
+    ]
+    
+    import base64
+    for p in paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "rb") as f:
+                    data = base64.b64encode(f.read()).decode()
+                ext = p.split(".")[-1]
+                return f'<img src="data:image/{ext};base64,{data}" style="height: 40px; max-width: 60px; object-fit: contain; display: block;" />'
+            except Exception:
+                pass
+                
+    # Fallback to premium CSS/SVG monograms
+    return get_team_logo_svg(team, color)
+
 def build_driver_card_html(
     pos: int,
     code: str,
@@ -198,7 +247,7 @@ def build_driver_card_html(
     first = parts[0]
     last = parts[1] if len(parts) > 1 else code
     
-    logo_svg = get_team_logo_svg(team, accent)
+    logo_html = get_team_logo_html(team, accent)
     
     # Text alignments
     text_align = "left" if align == "left" else "right"
@@ -239,7 +288,7 @@ def build_driver_card_html(
                 </div>
             </div>
             <div style="flex-shrink: 0;">
-                {logo_svg}
+                {logo_html}
             </div>
         </div>
         
