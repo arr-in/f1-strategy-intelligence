@@ -390,16 +390,37 @@ def load_data():
     driver_dna  = pd.read_csv('data/driver_dna.csv')
     return clean_laps, optimal_pit, driver_dna
 
+STRATEGY_FEATURES = [
+    'tire_age_at_pit', 'compound_num', 'race_progress',
+    'position_before', 'laps_remaining'
+]
+
+def _train_strategy_model(optimal_pit_df):
+    """Rebuild classifier from CSV when pickles can't be loaded (e.g. sklearn/Python mismatch)."""
+    from sklearn.ensemble import GradientBoostingClassifier
+    df = optimal_pit_df.dropna(subset=STRATEGY_FEATURES + ['optimal_pit'])
+    model = GradientBoostingClassifier(
+        n_estimators=300, learning_rate=0.05, max_depth=4,
+        subsample=0.8, random_state=42
+    )
+    model.fit(df[STRATEGY_FEATURES], df['optimal_pit'])
+    return model
+
 @st.cache_resource
-def load_models():
-    strategy_model = joblib.load('models/strategy_model.pkl')
-    dna_kmeans     = joblib.load('models/dna_kmeans.pkl')
-    dna_scaler     = joblib.load('models/dna_scaler.pkl')
-    dna_pca        = joblib.load('models/dna_pca.pkl')
-    return strategy_model, dna_kmeans, dna_scaler, dna_pca
+def load_models(_optimal_pit):
+    try:
+        return joblib.load('models/strategy_model.pkl')
+    except Exception as e:
+        # Common on Streamlit Cloud when Python/sklearn ≠ training env (e.g. Python 3.14)
+        st.warning(
+            f"Could not load saved strategy model ({type(e).__name__}). "
+            "Retraining from data — for a permanent fix, set the app Python version to **3.12** "
+            "in Streamlit Cloud → Advanced settings (delete & redeploy if needed)."
+        )
+        return _train_strategy_model(_optimal_pit)
 
 clean_laps, optimal_pit, driver_dna = load_data()
-strategy_model, dna_kmeans, dna_scaler, dna_pca = load_models()
+strategy_model = load_models(optimal_pit)
 
 # ─────────────────────────────────────────
 # HELPERS
