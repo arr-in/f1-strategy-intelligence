@@ -109,24 +109,28 @@ def get_race_schedule():
 # ─────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');
 
 *, html, body, [class*="css"] {
-    font-family: 'DM Mono', monospace !important;
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif !important;
 }
 
 .stApp {
     background-color: #060606 !important;
     background-image:
-        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
     background-size: 44px 44px;
 }
 
 .main .block-container {
     padding: 2.5rem 3rem 4rem !important;
     max-width: 1400px !important;
+    padding-bottom: 7rem !important; /* space for fixed footer */
 }
+
+/* smoother overall */
+* { scroll-behavior: smooth; }
 
 /* ── SIDEBAR ── */
 [data-testid="stSidebar"] {
@@ -203,6 +207,22 @@ button[kind="headerNoPadding"],
 .stButton > button:hover {
     background: #E8002D !important;
     color: #000000 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 30px rgba(232,0,45,0.12);
+}
+.stButton > button:active {
+    transform: translateY(0px);
+    box-shadow: none;
+}
+
+/* Cards: add breathing room + subtle lift */
+.driver-card, .decision-box, .analysis-box {
+    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+.driver-card:hover, .decision-box:hover, .analysis-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+    border-color: rgba(232,0,45,0.18);
 }
 
 /* ── RADIO NAV ── */
@@ -244,6 +264,47 @@ button[kind="headerNoPadding"],
 [data-testid="stSidebar"] iframe {
     background: transparent !important;
     border: none !important;
+}
+
+/* ── FIXED FOOTER (always at bottom) ── */
+.app-footer {
+    position: fixed;
+    left: 280px;  /* sidebar width */
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    background: rgba(6,6,6,0.92);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 0.8rem 1rem 0.7rem;
+}
+.app-footer .title {
+    font-family:'Bebas Neue', monospace;
+    font-size:0.9rem;
+    color:#2f2f2f;
+    letter-spacing:0.22em;
+    text-align:center;
+    margin:0;
+}
+.app-footer .sub {
+    font-size:0.62rem;
+    color:#2a2a2a;
+    letter-spacing:0.16em;
+    text-align:center;
+    margin:0.25rem 0 0.35rem;
+}
+.app-footer .love {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    font-size:0.64rem;
+    color:#2a2a2a;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+}
+@media (max-width: 900px) {
+  .app-footer { left: 0; }
 }
 
 /* ── SIDEBAR TEXT ── */
@@ -914,78 +975,105 @@ elif "Driver DNA" in page:
         tel_race = st.selectbox("CIRCUIT", AVAILABLE_RACES[tel_year])
     with tc3:
         st.markdown("<div style='padding-top:1.6rem'>", unsafe_allow_html=True)
-        load_tel = st.button("LOAD TELEMETRY ▶")
+        load_tel = st.button("LOAD TELEMETRY ▶", type="primary")
         st.markdown("</div>", unsafe_allow_html=True)
 
+    # Persist button intent across reruns (Streamlit buttons are one-shot)
+    if 'tel_load_requested' not in st.session_state:
+        st.session_state.tel_load_requested = False
+        st.session_state.tel_params = None
+
     if load_tel:
-        with st.spinner(f"Loading {tel_race} {tel_year} qualifying telemetry..."):
+        st.session_state.tel_load_requested = True
+        st.session_state.tel_params = (tel_year, tel_race, driver1, driver2)
+
+    @st.cache_data(ttl=60 * 60, show_spinner=False)
+    def _load_qualy_telemetry(year: int, race: str, d1: str, d2: str):
+        from scipy.interpolate import interp1d
+        sess = fastf1.get_session(year, race, 'Q')
+        # Be explicit: ensure laps + telemetry are loaded
+        sess.load(laps=True, telemetry=True, weather=False, messages=False)
+
+        lap1 = sess.laps.pick_driver(d1).pick_fastest()
+        lap2 = sess.laps.pick_driver(d2).pick_fastest()
+
+        if lap1 is None or lap2 is None:
+            raise ValueError("No qualifying lap found for one of the drivers.")
+
+        tel1 = lap1.get_telemetry().add_distance()
+        tel2 = lap2.get_telemetry().add_distance()
+        dmin = max(float(tel1['Distance'].min()), float(tel2['Distance'].min()))
+        dmax = min(float(tel1['Distance'].max()), float(tel2['Distance'].max()))
+        cd = np.linspace(dmin, dmax, 1500)
+
+        s1 = interp1d(tel1['Distance'], tel1['Speed'], fill_value='extrapolate')(cd)
+        s2 = interp1d(tel2['Distance'], tel2['Speed'], fill_value='extrapolate')(cd)
+        delt = s1 - s2
+
+        t1s = float(lap1['LapTime'].total_seconds())
+        t2s = float(lap2['LapTime'].total_seconds())
+        return cd, s1, s2, delt, t1s, t2s
+
+    if st.session_state.tel_load_requested and st.session_state.tel_params:
+        year, race, d1, d2 = st.session_state.tel_params
+        with st.spinner(f"Loading {race} {year} qualifying telemetry..."):
             try:
-                from scipy.interpolate import interp1d
-                sess = fastf1.get_session(tel_year, tel_race, 'Q')
-                sess.load(telemetry=True, weather=False, messages=False)
-                lap1 = sess.laps.pick_driver(driver1).pick_fastest()
-                lap2 = sess.laps.pick_driver(driver2).pick_fastest()
+                cd, s1, s2, delt, t1s, t2s = _load_qualy_telemetry(year, race, d1, d2)
 
-                if lap1.empty or lap2.empty:
-                    st.error(f"No qualifying lap found for one of the drivers in {tel_race} {tel_year}.")
-                else:
-                    tel1 = lap1.get_telemetry().add_distance()
-                    tel2 = lap2.get_telemetry().add_distance()
-                    dmin = max(tel1['Distance'].min(), tel2['Distance'].min())
-                    dmax = min(tel1['Distance'].max(), tel2['Distance'].max())
-                    cd   = np.linspace(dmin, dmax, 1500)
-                    s1   = interp1d(tel1['Distance'],tel1['Speed'],fill_value='extrapolate')(cd)
-                    s2   = interp1d(tel2['Distance'],tel2['Speed'],fill_value='extrapolate')(cd)
-                    delt = s1 - s2
+                n1 = DRIVER_NAMES.get(d1, d1)
+                n2 = DRIVER_NAMES.get(d2, d2)
 
-                    t1s = lap1['LapTime'].total_seconds()
-                    t2s = lap2['LapTime'].total_seconds()
-                    n1  = DRIVER_NAMES.get(driver1, driver1)
-                    n2  = DRIVER_NAMES.get(driver2, driver2)
+                fig_t = make_subplots(rows=2, cols=1, row_heights=[0.68, 0.32],
+                                      vertical_spacing=0.05, shared_xaxes=True)
+                fig_t.add_trace(go.Scatter(
+                    x=cd, y=s1, mode='lines',
+                    name=f'{n1}  ·  {int(t1s//60)}:{t1s%60:06.3f}',
+                    line=dict(color=c1c, width=2.5),
+                    hovertemplate=f'{d1}: %{{y:.0f}} km/h<extra></extra>'
+                ), row=1, col=1)
+                fig_t.add_trace(go.Scatter(
+                    x=cd, y=s2, mode='lines',
+                    name=f'{n2}  ·  {int(t2s//60)}:{t2s%60:06.3f}',
+                    line=dict(color=c2c, width=2.5),
+                    hovertemplate=f'{d2}: %{{y:.0f}} km/h<extra></extra>'
+                ), row=1, col=1)
+                fig_t.add_trace(go.Scatter(
+                    x=cd, y=delt, mode='lines',
+                    fill='tozeroy', fillcolor=hex_to_rgba(c1c, 0.1),
+                    line=dict(color=c1c, width=1.5),
+                    name=f'Δ Speed ({d1} − {d2})',
+                    hovertemplate='Δ: %{y:.1f} km/h<extra></extra>'
+                ), row=2, col=1)
+                fig_t.add_hline(y=0, line=dict(color='#1a1a1a', width=1), row=2, col=1)
 
-                    fig_t = make_subplots(rows=2,cols=1,row_heights=[0.68,0.32],
-                                          vertical_spacing=0.05,shared_xaxes=True)
-                    fig_t.add_trace(go.Scatter(
-                        x=cd,y=s1,mode='lines',
-                        name=f'{n1}  ·  {int(t1s//60)}:{t1s%60:06.3f}',
-                        line=dict(color=c1c,width=2.5),
-                        hovertemplate=f'{driver1}: %{{y:.0f}} km/h<extra></extra>'
-                    ),row=1,col=1)
-                    fig_t.add_trace(go.Scatter(
-                        x=cd,y=s2,mode='lines',
-                        name=f'{n2}  ·  {int(t2s//60)}:{t2s%60:06.3f}',
-                        line=dict(color=c2c,width=2.5),
-                        hovertemplate=f'{driver2}: %{{y:.0f}} km/h<extra></extra>'
-                    ),row=1,col=1)
-                    fig_t.add_trace(go.Scatter(
-                        x=cd,y=delt,mode='lines',
-                        fill='tozeroy',fillcolor=hex_to_rgba(c1c,0.1),
-                        line=dict(color=c1c,width=1.5),
-                        name=f'Δ Speed ({driver1} − {driver2})',
-                        hovertemplate='Δ: %{y:.1f} km/h<extra></extra>'
-                    ),row=2,col=1)
-                    fig_t.add_hline(y=0,line=dict(color='#1a1a1a',width=1),row=2,col=1)
-
-                    for row in [1,2]:
-                        fig_t.update_xaxes(gridcolor='#0f0f0f',zerolinecolor='#111',
-                                           tickfont=dict(color='#555',size=9),row=row,col=1)
-                        fig_t.update_yaxes(gridcolor='#0f0f0f',zerolinecolor='#111',
-                                           tickfont=dict(color='#555',size=9),row=row,col=1)
-                    fig_t.update_yaxes(title_text='Speed (km/h)',
-                                       title_font=dict(color='#666',size=10,family='monospace'),row=1,col=1)
-                    fig_t.update_yaxes(title_text='Δ Speed',
-                                       title_font=dict(color='#666',size=10,family='monospace'),row=2,col=1)
-                    fig_t.update_xaxes(title_text='Distance (m)',
-                                       title_font=dict(color='#666',size=10,family='monospace'),row=2,col=1)
-                    fig_t.update_layout(
-                        **PLOT_BASE,
-                        title=dict(
-                            text=f'{tel_race.upper()} {tel_year}  ·  QUALIFYING  ·  {driver1} vs {driver2}',
-                            font=dict(size=12,color='#555',family='monospace'),x=0.5,xanchor='center'
-                        ),
-                        height=600,hovermode='x unified'
+                for row in [1, 2]:
+                    fig_t.update_xaxes(
+                        gridcolor='#0f0f0f', zerolinecolor='#111',
+                        tickfont=dict(color='#555', size=9), row=row, col=1
                     )
-                    st.plotly_chart(fig_t, use_container_width=True)
+                    fig_t.update_yaxes(
+                        gridcolor='#0f0f0f', zerolinecolor='#111',
+                        tickfont=dict(color='#555', size=9), row=row, col=1
+                    )
+                fig_t.update_yaxes(
+                    title_text='Speed (km/h)',
+                    title_font=dict(color='#666', size=10, family='monospace'), row=1, col=1
+                )
+                fig_t.update_yaxes(
+                    title_text='Δ Speed',
+                    title_font=dict(color='#666', size=10, family='monospace'), row=2, col=1
+                )
+
+                fig_t.update_layout(
+                    **PLOT_BASE,
+                    title=dict(
+                        text=f'{race.upper()} {year}  ·  QUALIFYING  ·  {d1} vs {d2}',
+                        font=dict(size=12, color='#555', family='monospace'), x=0.5, xanchor='center'
+                    ),
+                    height=600,
+                    hovermode='x unified'
+                )
+                st.plotly_chart(fig_t, use_container_width=True)
 
             except Exception as e:
                 st.error(f"Telemetry error: {str(e)}")
@@ -1129,29 +1217,24 @@ elif "Strategy Simulator" in page:
 
     sens_yax = ax('Pit Probability (%)')
     sens_yax['range'] = [0, 100]
-    fig_s.update_layout(
-        **PLOT_BASE, height=280,
+    # Avoid passing 'margin' twice (PLOT_BASE already contains margin)
+    _layout = dict(PLOT_BASE)
+    _layout.update(
+        height=280,
         xaxis=ax('Tire Age (laps)'),
         yaxis=sens_yax,
-        margin=dict(t=30,b=45,l=55,r=20)
+        margin=dict(t=30, b=45, l=55, r=20)
     )
+    fig_s.update_layout(**_layout)
     st.plotly_chart(fig_s, use_container_width=True)
 
 # ─────────────────────────────────────────
 # FOOTER
 # ─────────────────────────────────────────
 st.markdown("""
-<div style="margin-top:5rem;padding:2rem 0 1.5rem;border-top:1px solid #111;text-align:center">
-    <div style="font-family:'Bebas Neue',monospace;font-size:0.95rem;color:#2a2a2a;
-                letter-spacing:0.2em;margin-bottom:6px">F1 STRATEGY INTELLIGENCE SYSTEM</div>
-    <div style="font-size:0.65rem;color:#222;letter-spacing:0.15em;margin-bottom:8px">
-        FastF1 · scikit-learn · Streamlit · Plotly · 2022–2026
-    </div>
-    <div style="display:flex;align-items:center;justify-content:center;gap:6px">
-        <span style="color:#E8002D;font-size:16px;line-height:1">♥</span>
-        <span style="font-size:0.68rem;color:#2a2a2a;letter-spacing:0.18em;text-transform:uppercase">
-            Made with love by Arin
-        </span>
-    </div>
+<div class="app-footer">
+  <div class="title">F1 STRATEGY INTELLIGENCE SYSTEM</div>
+  <div class="sub">FastF1 · scikit-learn · Streamlit · Plotly · 2022–2026</div>
+  <div class="love"><span style="color:#E8002D;font-size:14px;line-height:1">♥</span> Made with love by Arin</div>
 </div>
 """, unsafe_allow_html=True)
