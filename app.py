@@ -638,19 +638,13 @@ def load_qualy_speed_trace(year: int, race: str, d1: str, d2: str):
 # SIDEBAR
 # ─────────────────────────────────────────
 with st.sidebar:
-    # Logo via st.image — base64-in-markdown breaks Streamlit HTML rendering
-    if os.path.exists('f1_logo.png'):
-        st.markdown('<div style="padding:1.5rem 24px 0 24px">', unsafe_allow_html=True)
-        st.image('f1_logo.png', width=72)
+    # Brand lockup image (replaces old F1 mark + STRAT text block)
+    if os.path.exists('strat_logo.png'):
+        st.markdown('<div style="padding:1.25rem 20px 0.5rem 20px">', unsafe_allow_html=True)
+        st.image('strat_logo.png', use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("""
-    <div style="padding:0.6rem 24px 0">
-      <div style="font-family:Bebas Neue,sans-serif;font-size:2.6rem;color:#fff;letter-spacing:0.28em;line-height:0.9">STRAT</div>
-      <div style="margin-top:10px;font-size:0.52rem;color:#666;letter-spacing:0.16em;text-transform:uppercase;line-height:1.55;max-width:210px;font-family:DM Mono,monospace">AI-powered Formula 1 Analytics</div>
-      <div style="height:2px;width:42px;background:#E10600;margin:18px 0 16px"></div>
-    </div>
-    """, unsafe_allow_html=True)
+    elif os.path.exists('f1_logo.png'):
+        st.image('f1_logo.png', width=72)
 
     # Real-time flip clock — must use components.html so JS runs
     # (st.markdown strips <script> tags)
