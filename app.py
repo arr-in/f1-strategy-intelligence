@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -239,68 +240,10 @@ button[kind="headerNoPadding"],
 #MainMenu, footer, header { visibility: hidden; }
 .stDeployButton { display: none !important; }
 
-/* ── FLIP CLOCK ── */
-.flip-clock-wrap {
-    display: grid;
-    grid-template-columns: 1fr 12px 1fr 12px 1fr 12px 1fr;
-    gap: 4px;
-    align-items: start;
-    margin: 10px 0;
-}
-.flip-unit { display: flex; flex-direction: column; align-items: center; }
-.flip-card {
-    background: linear-gradient(180deg, #161616 0%, #111 49%, #0d0d0d 51%, #161616 100%);
-    border: 1px solid #222;
-    border-top: 2px solid #E8002D;
-    border-radius: 4px;
-    width: 100%;
-    padding: 10px 4px 8px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03);
-}
-.flip-card::after {
-    content: '';
-    position: absolute;
-    left: 0; right: 0; top: 50%;
-    height: 1px;
-    background: rgba(0,0,0,0.9);
-    z-index: 2;
-}
-.flip-num {
-    font-family: 'Bebas Neue', monospace;
-    font-size: 1.8rem;
-    color: #E8002D;
-    line-height: 1;
-    display: block;
-    text-shadow: 0 0 20px rgba(232,0,45,0.5);
-}
-.flip-lbl {
-    font-size: 0.46rem;
-    color: #555;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    display: block;
-    margin-top: 5px;
-}
-.flip-sep {
-    font-family: 'Bebas Neue', monospace;
-    font-size: 1.4rem;
-    color: #E8002D;
-    text-align: center;
-    opacity: 0.35;
-    padding-top: 8px;
-    align-self: flex-start;
-    line-height: 1;
-}
-.next-race-name {
-    font-family: 'Bebas Neue', monospace;
-    font-size: 1rem;
-    color: #ffffff;
-    letter-spacing: 0.12em;
-    text-align: center;
-    margin-bottom: 6px;
-    line-height: 1.2;
+/* ── FLIP CLOCK IFRAME (components.html) ── */
+[data-testid="stSidebar"] iframe {
+    background: transparent !important;
+    border: none !important;
 }
 
 /* ── SIDEBAR TEXT ── */
@@ -512,14 +455,99 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    # Real-time flip clock countdown
+    # Real-time flip clock — must use components.html so JS runs
+    # (st.markdown strips <script> tags)
     next_race = get_race_schedule()
     if next_race:
         race_ts = int(next_race['date'].timestamp() * 1000)
-        st.markdown(f"""
-        <div style="padding:0 24px 18px">
-            <div class="sidebar-eyebrow">NEXT RACE · RD {next_race['round']}</div>
-            <div class="next-race-name">{next_race['name'].upper()}</div>
+        race_name = next_race['name'].upper().replace("'", "\\'")
+        round_num = next_race['round']
+        components.html(f"""
+        <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+        <style>
+            html, body {{
+                margin: 0; padding: 0;
+                background: transparent;
+                font-family: 'DM Mono', monospace;
+                overflow: hidden;
+            }}
+            .wrap {{ padding: 0 24px 8px; box-sizing: border-box; }}
+            .sidebar-eyebrow {{
+                font-size: 0.52rem;
+                letter-spacing: 0.28em;
+                text-transform: uppercase;
+                color: #444;
+                margin-bottom: 10px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid #141414;
+            }}
+            .next-race-name {{
+                font-family: 'Bebas Neue', monospace;
+                font-size: 1rem;
+                color: #ffffff;
+                letter-spacing: 0.12em;
+                text-align: center;
+                margin-bottom: 6px;
+                line-height: 1.2;
+            }}
+            .flip-clock-wrap {{
+                display: grid;
+                grid-template-columns: 1fr 12px 1fr 12px 1fr 12px 1fr;
+                gap: 4px;
+                align-items: start;
+                margin: 10px 0;
+            }}
+            .flip-unit {{ display: flex; flex-direction: column; align-items: center; }}
+            .flip-card {{
+                background: linear-gradient(180deg, #161616 0%, #111 49%, #0d0d0d 51%, #161616 100%);
+                border: 1px solid #222;
+                border-top: 2px solid #E8002D;
+                border-radius: 4px;
+                width: 100%;
+                padding: 10px 4px 8px;
+                text-align: center;
+                position: relative;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03);
+            }}
+            .flip-card::after {{
+                content: '';
+                position: absolute;
+                left: 0; right: 0; top: 50%;
+                height: 1px;
+                background: rgba(0,0,0,0.9);
+                z-index: 2;
+            }}
+            .flip-num {{
+                font-family: 'Bebas Neue', monospace;
+                font-size: 1.8rem;
+                color: #E8002D;
+                line-height: 1;
+                display: block;
+                text-shadow: 0 0 20px rgba(232,0,45,0.5);
+            }}
+            .flip-lbl {{
+                font-size: 0.46rem;
+                color: #555;
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                display: block;
+                margin-top: 5px;
+            }}
+            .flip-sep {{
+                font-family: 'Bebas Neue', monospace;
+                font-size: 1.4rem;
+                color: #E8002D;
+                text-align: center;
+                opacity: 0.35;
+                padding-top: 8px;
+                align-self: flex-start;
+                line-height: 1;
+            }}
+            .rule {{ height: 1px; background: #141414; margin: 14px 0 0; }}
+        </style>
+        <div class="wrap">
+            <div class="sidebar-eyebrow">NEXT RACE · RD {round_num}</div>
+            <div class="next-race-name">{race_name}</div>
             <div class="flip-clock-wrap">
                 <div class="flip-unit">
                     <div class="flip-card"><span class="flip-num" id="fc-days">--</span></div>
@@ -541,32 +569,32 @@ with st.sidebar:
                     <span class="flip-lbl">SEC</span>
                 </div>
             </div>
-            <script>
-            (function() {{
-                var target = {race_ts};
-                function pad(n) {{ return n < 10 ? '0' + n : '' + n; }}
-                function tick() {{
-                    var diff = Math.max(0, Math.floor((target - Date.now()) / 1000));
-                    var d = Math.floor(diff / 86400);
-                    var h = Math.floor((diff % 86400) / 3600);
-                    var m = Math.floor((diff % 3600) / 60);
-                    var s = diff % 60;
-                    var ed = document.getElementById('fc-days');
-                    var eh = document.getElementById('fc-hours');
-                    var em = document.getElementById('fc-mins');
-                    var es = document.getElementById('fc-secs');
-                    if (ed) ed.textContent = pad(d);
-                    if (eh) eh.textContent = pad(h);
-                    if (em) em.textContent = pad(m);
-                    if (es) es.textContent = pad(s);
-                }}
-                tick();
-                setInterval(tick, 1000);
-            }})();
-            </script>
-            <div style="height:1px;background:#141414;margin:18px 0"></div>
+            <div class="rule"></div>
         </div>
-        """, unsafe_allow_html=True)
+        <script>
+        (function() {{
+            var target = {race_ts};
+            function pad(n) {{ return n < 10 ? '0' + n : '' + n; }}
+            function tick() {{
+                var diff = Math.max(0, Math.floor((target - Date.now()) / 1000));
+                var d = Math.floor(diff / 86400);
+                var h = Math.floor((diff % 86400) / 3600);
+                var m = Math.floor((diff % 3600) / 60);
+                var s = diff % 60;
+                var ed = document.getElementById('fc-days');
+                var eh = document.getElementById('fc-hours');
+                var em = document.getElementById('fc-mins');
+                var es = document.getElementById('fc-secs');
+                if (ed) ed.textContent = pad(d);
+                if (eh) eh.textContent = pad(h);
+                if (em) em.textContent = pad(m);
+                if (es) es.textContent = pad(s);
+            }}
+            tick();
+            setInterval(tick, 1000);
+        }})();
+        </script>
+        """, height=168, scrolling=False)
 
     # Navigation
     st.markdown('<div style="padding:0 24px 6px"><div class="sidebar-eyebrow">NAVIGATION</div></div>',
