@@ -517,63 +517,75 @@ def ax(title=''):
         title_font=dict(color='#666', size=10, family='monospace')
     )
 
+def _telemetry_csv_path(year: int, race: str) -> str:
+    return os.path.join('data', 'telemetry', f'{year}_{race.replace(" ", "_")}_Q.csv')
+
+
 def _fastest_car_trace(session, driver_code: str):
-    """Return (distance, speed, lap_time_sec) for a driver's fastest lap."""
-    # FastF1 3.x: pick_drivers (plural). Fall back to pick_driver if needed.
+    """Live FastF1 fallback: return (distance, speed, lap_time_sec)."""
     try:
         laps = session.laps.pick_drivers(driver_code)
     except Exception:
         laps = session.laps.pick_driver(driver_code)
-
     if laps is None or getattr(laps, 'empty', False):
         raise ValueError(f"No qualifying laps found for {driver_code}.")
-
     lap = laps.pick_fastest()
-    if lap is None:
+    if lap is None or pd.isna(lap['LapTime']):
         raise ValueError(f"No valid fastest lap for {driver_code}.")
-    try:
-        lap_time = lap['LapTime']
-    except Exception:
-        lap_time = None
-    if lap_time is None or pd.isna(lap_time):
-        raise ValueError(f"No valid fastest lap for {driver_code}.")
-
-    # Prefer car data (Speed) — more reliable than get_telemetry() on Cloud
     try:
         tel = lap.get_car_data().add_distance()
     except Exception:
         tel = lap.get_telemetry().add_distance()
-
-    if tel is None or len(tel) < 20 or 'Speed' not in tel.columns or 'Distance' not in tel.columns:
+    if tel is None or len(tel) < 20 or 'Speed' not in tel.columns:
         raise ValueError(f"Telemetry incomplete for {driver_code}.")
+    return (
+        tel['Distance'].to_numpy(dtype=float),
+        tel['Speed'].to_numpy(dtype=float),
+        float(lap['LapTime'].total_seconds()),
+    )
 
-    t_sec = float(lap_time.total_seconds())
-    return tel['Distance'].to_numpy(dtype=float), tel['Speed'].to_numpy(dtype=float), t_sec
+
+def _trace_from_csv(path: str, driver_code: str):
+    """Load one driver's fastest-lap distance/speed from a pre-exported CSV."""
+    df = pd.read_csv(path)
+    sub = df[df['Driver'] == driver_code]
+    if sub.empty:
+        available = sorted(df['Driver'].unique().tolist())
+        raise ValueError(
+            f"No qualifying telemetry for {driver_code} in this session. "
+            f"Available: {', '.join(available)}"
+        )
+    dist = sub['Distance'].to_numpy(dtype=float)
+    speed = sub['Speed'].to_numpy(dtype=float)
+    t_sec = float(sub['LapTimeSec'].iloc[0])
+    order = np.argsort(dist)
+    return dist[order], speed[order], t_sec
 
 
 @st.cache_data(ttl=60 * 60, show_spinner=False)
 def load_qualy_speed_trace(year: int, race: str, d1: str, d2: str):
-    """Load qualifying speed traces for two drivers. Cached at module level for Cloud stability."""
+    """
+    Load qualifying speed traces for two drivers.
+
+    Prefer shipped CSVs in data/telemetry/ (Streamlit Cloud cannot reliably
+    download FastF1 car telemetry from F1 datacenter-blocked IPs). Live FastF1
+    is only used as a local/dev fallback when the CSV is missing.
+    """
     from scipy.interpolate import interp1d
 
-    session = fastf1.get_session(year, race, 'Q')
-    # Full load — partial loads cause DataNotLoadedError on get_car_data / get_telemetry
-    try:
-        session.load()
-    except Exception:
-        # Second attempt with explicit flags (some FastF1 builds behave better this way)
+    path = _telemetry_csv_path(year, race)
+    if os.path.exists(path):
+        d1_dist, d1_spd, t1s = _trace_from_csv(path, d1)
+        d2_dist, d2_spd, t2s = _trace_from_csv(path, d2)
+    else:
         session = fastf1.get_session(year, race, 'Q')
         session.load(laps=True, telemetry=True, weather=False, messages=False)
-
-    # Sanity: ensure timing + car data actually landed
-    if session.laps is None or getattr(session.laps, 'empty', True):
-        raise RuntimeError(
-            f"No lap data for {race} {year} qualifying. "
-            "This circuit/year may not be available from FastF1 yet."
-        )
-
-    d1_dist, d1_spd, t1s = _fastest_car_trace(session, d1)
-    d2_dist, d2_spd, t2s = _fastest_car_trace(session, d2)
+        if session.laps is None or getattr(session.laps, 'empty', True):
+            raise RuntimeError(
+                f"No telemetry file at {path} and live FastF1 load failed for {race} {year}."
+            )
+        d1_dist, d1_spd, t1s = _fastest_car_trace(session, d1)
+        d2_dist, d2_spd, t2s = _fastest_car_trace(session, d2)
 
     dmin = max(float(np.nanmin(d1_dist)), float(np.nanmin(d2_dist)))
     dmax = min(float(np.nanmax(d1_dist)), float(np.nanmax(d2_dist)))
@@ -1130,15 +1142,7 @@ elif "Driver DNA" in page:
                 st.plotly_chart(fig_t, use_container_width=True)
 
             except Exception as e:
-                # Clear bad cache entry for this combo so a retry can re-download
-                try:
-                    load_qualy_speed_trace.clear()
-                except Exception:
-                    pass
-                st.error(
-                    f"Telemetry error: {e}\n\n"
-                    "Tip: try another circuit/year, or reboot the app so FastF1 can re-download session data."
-                )
+                st.error(f"Telemetry error: {e}")
 
 # ─────────────────────────────────────────
 # PAGE 3 — STRATEGY SIMULATOR
