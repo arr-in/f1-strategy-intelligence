@@ -135,11 +135,14 @@ st.markdown("""
 * { scroll-behavior: smooth; }
 
 /* ── SIDEBAR ── */
-[data-testid="stSidebar"] {
+[data-testid="stSidebar"],
+[data-testid="stSidebarUserContent"],
+[data-testid="stSidebar"] > div {
     background: #0B0B0B !important;
     border-right: 1px solid #161616 !important;
     min-width: 280px !important;
     max-width: 280px !important;
+    overflow: hidden !important;
 }
 [data-testid="stSidebar"] > div {
     padding: 0 !important;
@@ -897,15 +900,7 @@ with st.sidebar:
         </div>
         """, unsafe_allow_html=True)
 
-    # Sidebar footer
-    st.markdown("""
-    <div style="padding:28px 24px 24px;margin-top:32px;border-top:1px solid #141414">
-        <div style="text-align:center;font-size:10px;color:#515462;letter-spacing:0.05em;line-height:1.6;font-family:'Inter',sans-serif;">
-            Built for the <svg viewBox="0 0 24 24" style="width: 10px; height: 10px; fill: #E10600; display: inline-block; vertical-align: middle; margin: -2px 2px 0 2px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> of Formula 1.<br>
-            <span style="font-weight: 700; color: #8a8d98; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; display: block;">— Arin</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────
 # PAGE 0 — QUALI LAB (broadcast telemetry)
