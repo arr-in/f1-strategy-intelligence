@@ -12,7 +12,6 @@ from plotly.subplots import make_subplots
 from scipy.interpolate import interp1d
 from scipy.signal import find_peaks
 
-
 RED = "#E10600"
 YELLOW = "#FFEB00"
 CYAN = "#00E5FF"
@@ -21,9 +20,9 @@ LIME = "#B4FF00"
 MAGENTA = "#FF2BD6"
 BLUE = "#3D7EFF"
 WHITE = "#F2F2F2"
-BG = "#0B0B0B"
-MUTED = "#6B6B6B"
-GRID = "#1A1A1A"
+BG = "#101116"      # The dark blue/black background from the F1 graphics
+MUTED = "#515462"   # Medium/dark grey for labels
+GRID = "#1b1c23"    # Very dark blue-grey grid lines
 
 # High-contrast palette — never rely on team colors
 DRIVER_PALETTE = [
@@ -31,18 +30,15 @@ DRIVER_PALETTE = [
     "#7CFFB2", "#FF8FAB", "#A78BFA", "#38BDF8",
 ]
 
-
 def format_laptime(sec: float) -> str:
     m = int(sec // 60)
     s = sec % 60
     return f"{m}:{s:06.3f}"
 
-
 def driver_theme_color(code: str) -> str:
     """Stable unique-ish color per driver code."""
     h = int(hashlib.md5(code.encode()).hexdigest(), 16)
     return DRIVER_PALETTE[h % len(DRIVER_PALETTE)]
-
 
 def pair_theme_colors(code1: str, code2: str) -> Tuple[str, str]:
     """Always return two visually different theme colors for a head-to-head."""
@@ -53,7 +49,6 @@ def pair_theme_colors(code1: str, code2: str) -> Tuple[str, str]:
         i = DRIVER_PALETTE.index(c1)
         c2 = DRIVER_PALETTE[(i + 1) % len(DRIVER_PALETTE)]
     return c1, c2
-
 
 def drive_style_from_speed(speed: np.ndarray) -> Tuple[float, float, float]:
     speed = np.asarray(speed, dtype=float)
@@ -66,14 +61,12 @@ def drive_style_from_speed(speed: np.ndarray) -> Tuple[float, float, float]:
     cornering = float(np.clip(np.mean(speed < 0.58 * vmax) * 100, 10, 70))
     return full_throttle, heavy_brake, cornering
 
-
 def cumulative_time_delta(distance: np.ndarray, s1: np.ndarray, s2: np.ndarray) -> np.ndarray:
     v1 = np.maximum(np.asarray(s1, dtype=float), 1.0) / 3.6
     v2 = np.maximum(np.asarray(s2, dtype=float), 1.0) / 3.6
     dd = np.diff(distance, prepend=distance[0])
     dd[0] = 0.0
     return np.cumsum(dd / v1) - np.cumsum(dd / v2)
-
 
 def detect_turn_distances(distance: np.ndarray, speed: np.ndarray, max_turns: int = 14) -> np.ndarray:
     speed = np.asarray(speed, dtype=float)
@@ -85,7 +78,6 @@ def detect_turn_distances(distance: np.ndarray, speed: np.ndarray, max_turns: in
         return np.array([])
     order = np.argsort(speed[peaks])[:max_turns]
     return distance[np.sort(peaks[order])]
-
 
 def load_track_outline(year: int, race: str) -> Optional[pd.DataFrame]:
     path = os.path.join("data", "telemetry", f"track_{year}_{race.replace(' ', '_')}.csv")
@@ -102,20 +94,92 @@ def load_track_outline(year: int, race: str) -> Optional[pd.DataFrame]:
         return None
     return df
 
+def get_team_logo_svg(team: str, color: str) -> str:
+    team_lower = team.lower()
+    if 'ferrari' in team_lower:
+        return """
+        <svg viewBox="0 0 40 50" width="32" height="40" style="display: block;">
+            <path d="M20 2 C32 2, 36 8, 36 28 C36 42, 20 48, 20 48 C20 48, 4 42, 4 28 C4 8, 8 2, 20 2 Z" fill="#FFEB00"/>
+            <path d="M20,12 c-0.4,1 -1,2.3 -0.5,3.3 c0.4,0.8 1.8,0.7 2.1,1.5 c0.3,0.8 -0.8,1.4 -0.6,2.2 c0.2,0.8 1.5,0.7 1.3,1.9 c-0.2,1.2 -1.4,1 -1.4,2 c0,1 0.7,0.9 0.7,1.8 c0,0.9 -1.1,1 -1,1.8 c0.1,0.8 1.4,0.7 1,1.8 c-0.4,1.1 -2.3,1.6 -3.2,1.3 c-0.9,-0.3 -0.4,-2 -0.8,-2.6 c-0.4,-0.6 -1.8,0 -2.3,-0.6 c-0.5,-0.6 0.1,-1.5 0.2,-2.3 c0.1,-0.8 -0.7,-1 -0.9,-1.8 c-0.2,-0.8 0.3,-1.2 0.3,-2 c0,-0.8 -0.9,-1 -0.7,-1.8 c0.2,-0.8 0.8,-0.9 0.5,-1.8 c-0.3,-0.9 -1.2,-0.5 -1.2,-1.3 c0,-0.8 1,-1.4 1.7,-2 c0.7,-0.6 0.8,-1.7 1.8,-1.8 c1,-0.1 1.7,0.7 2.3,0.3 c0.6,-0.4 0.6,-1.7 1.2,-1.8 C19.9,9.9 20.4,11 20,12 Z" fill="#000000"/>
+        </svg>
+        """
+    elif 'mercedes' in team_lower:
+        return f"""
+        <svg viewBox="0 0 40 40" width="32" height="32" style="display: block;">
+            <circle cx="20" cy="20" r="18" fill="none" stroke="{color}" stroke-width="2"/>
+            <path d="M20 20 L20 4 M20 20 L6 28 M20 20 L34 28" fill="none" stroke="{color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        """
+    elif 'red bull' in team_lower:
+        return f"""
+        <svg viewBox="0 0 42 30" width="38" height="28" style="display: block;">
+            <circle cx="21" cy="15" r="9" fill="#FFCC00"/>
+            <path d="M 4 20 C 8 14, 12 14, 18 18 C 24 22, 28 16, 32 18 L 30 12 C 26 14, 22 10, 16 14 C 10 18, 6 16, 4 20 Z" fill="{color}"/>
+            <path d="M 8 24 C 12 20, 16 18, 22 20 C 28 22, 30 18, 34 20" fill="none" stroke="#E8002D" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        """
+    elif 'mclaren' in team_lower:
+        return f"""
+        <svg viewBox="0 0 40 30" width="34" height="26" style="display: block;">
+            <path d="M10 25 C18 21, 28 17, 34 9 C30 13, 20 15, 10 25 Z" fill="{color}"/>
+        </svg>
+        """
+    elif 'aston martin' in team_lower:
+        return f"""
+        <svg viewBox="0 0 50 30" width="40" height="24" style="display: block;">
+            <path d="M5 15 C15 10, 20 12, 25 15 C30 12, 35 10, 45 15 C35 22, 15 22, 5 15 Z" fill="none" stroke="{color}" stroke-width="2"/>
+            <path d="M10 15 L40 15 M15 15 L20 18 M35 15 L30 18" fill="none" stroke="{color}" stroke-width="1.5"/>
+            <rect x="22" y="11" width="6" height="6" fill="{color}"/>
+        </svg>
+        """
+    elif 'alpine' in team_lower:
+        return f"""
+        <svg viewBox="0 0 40 40" width="32" height="32" style="display: block;">
+            <path d="M10 34 L20 6 L30 34 L25 34 L20 20 L15 34 Z M16 28 L24 28" fill="{color}"/>
+        </svg>
+        """
+    elif 'williams' in team_lower:
+        return f"""
+        <svg viewBox="0 0 40 40" width="32" height="32" style="display: block;">
+            <path d="M6 10 L14 30 L20 18 L26 30 L34 10 L28 10 L23 22 L17 10 Z" fill="{color}"/>
+        </svg>
+        """
+    elif 'haas' in team_lower:
+        return f"""
+        <svg viewBox="0 0 40 40" width="32" height="32" style="display: block;">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="{color}" stroke-width="2"/>
+            <path d="M14 12 L14 28 M26 12 L26 28 M14 20 L26 20" fill="none" stroke="{color}" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        """
+    elif 'sauber' in team_lower or 'alfa romeo' in team_lower:
+        return f"""
+        <svg viewBox="0 0 40 40" width="32" height="32" style="display: block;">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="{color}" stroke-width="2"/>
+            <path d="M14 14 C18 10, 26 10, 26 18 C26 22, 14 22, 14 26 C14 30, 22 30, 26 26" fill="none" stroke="{color}" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        """
+    else:
+        initial = team[0].upper() if team else 'T'
+        return f"""
+        <svg viewBox="0 0 40 40" width="32" height="32" style="display: block;">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="{color}" stroke-width="2"/>
+            <text x="20" y="26" font-family="'Inter', sans-serif" font-weight="900" font-size="18" fill="{color}" text-anchor="middle">{initial}</text>
+        </svg>
+        """
 
-def _bar(label: str, pct: float, color: str) -> str:
+def _bar_html(label: str, pct: float, color: str) -> str:
     w = max(4.0, min(100.0, pct))
-    # NO blank lines — Streamlit markdown treats blank lines as end-of-HTML
-    return (
-        f'<div style="margin-top:10px">'
-        f'<div style="display:flex;justify-content:space-between;font-size:10px;'
-        f'letter-spacing:0.14em;color:#777;margin-bottom:4px;text-transform:uppercase;'
-        f'font-family:DM Mono,monospace">'
-        f'<span>{label}</span><span style="color:#bbb">{pct:.0f}%</span></div>'
-        f'<div style="height:8px;background:#1a1a1a;overflow:hidden">'
-        f'<div style="width:{w:.1f}%;height:100%;background:{color}"></div></div></div>'
-    )
-
+    return f"""
+    <div style="margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.65rem; color: #8a8d98; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 3px;">
+            <span>{label}</span>
+            <span style="color: #ffffff; font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem; font-style: italic;">{pct:.0f}%</span>
+        </div>
+        <div style="height: 5px; background: #222530; border-radius: 2px; overflow: hidden; width: 100%;">
+            <div style="width: {w:.1f}%; height: 100%; background: {color}; border-radius: 2px;"></div>
+        </div>
+    </div>
+    """
 
 def build_driver_card_html(
     pos: int,
@@ -133,38 +197,77 @@ def build_driver_card_html(
     parts = full_name.split(" ", 1)
     first = parts[0]
     last = parts[1] if len(parts) > 1 else code
+    
+    logo_svg = get_team_logo_svg(team, accent)
+    
+    # Text alignments
     text_align = "left" if align == "left" else "right"
     flex_dir = "row" if align == "left" else "row-reverse"
-    body = (
-        f'<div style="background:#111;border:1px solid #1c1c1c;padding:1.25rem 1.3rem 1.35rem;'
-        f'text-align:{text_align};height:100%;box-sizing:border-box;font-family:DM Mono,monospace">'
-        f'<div style="display:flex;flex-direction:{flex_dir};align-items:flex-start;gap:14px">'
-        f'<div style="font-family:Bebas Neue,sans-serif;font-size:4.2rem;line-height:0.85;'
-        f'color:{accent};letter-spacing:0.02em">{pos}</div>'
-        f'<div style="flex:1;min-width:0">'
-        f'<div style="font-size:0.7rem;letter-spacing:0.22em;color:#666;text-transform:uppercase">{first}</div>'
-        f'<div style="font-family:Bebas Neue,sans-serif;font-size:2.1rem;letter-spacing:0.06em;'
-        f'color:#fff;line-height:1;margin:2px 0 6px">{last.upper()}</div>'
-        f'<div style="font-size:0.62rem;letter-spacing:0.2em;color:#555;text-transform:uppercase">{team}</div></div></div>'
-        f'<div style="margin-top:16px;display:flex;justify-content:space-between;gap:12px;'
-        f'flex-direction:{flex_dir};align-items:baseline">'
-        f'<div><div style="font-size:0.55rem;letter-spacing:0.2em;color:#555">LAP TIME</div>'
-        f'<div style="font-family:Bebas Neue,sans-serif;font-size:1.85rem;color:#fff;'
-        f'letter-spacing:0.04em">{format_laptime(lap_sec)}</div></div>'
-        f'<div><div style="font-size:0.55rem;letter-spacing:0.2em;color:#555">GAP</div>'
-        f'<div style="font-family:DM Mono,monospace;font-size:0.95rem;color:{accent};'
-        f'font-weight:500">{gap_text}</div></div></div>'
-        f'{_bar("Full Throttle", ft, accent)}'
-        f'{_bar("Heavy Braking", hb, accent)}'
-        f'{_bar("Cornering", corner, "#888")}'
-        f'</div>'
-    )
-    return (
-        '<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">'
-        '<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}</style>'
-        + body
-    )
-
+    border_style = f"border-left: 6px solid {accent};" if align == "left" else f"border-right: 6px solid {accent};"
+    
+    # Progress bars layout
+    bar_margin = "margin-left: 10px;" if align == "left" else "margin-right: 10px;"
+    bars_flex_dir = "row" if align == "left" else "row-reverse"
+    
+    # Pre-render the vertical labels to avoid backslashes inside f-string expressions
+    lbl_left = "<div class='vertical-lbl-container' style='width: 15px; display: flex; align-items: center; justify-content: center; height: 75px;'><div style='transform: rotate(-90deg); white-space: nowrap; font-family: \"Inter\", sans-serif; font-size: 0.58rem; font-weight: 800; color: #4e515d; letter-spacing: 0.1em;'>% LAP TIME</div></div>" if align == "left" else ""
+    lbl_right = "<div class='vertical-lbl-container' style='width: 15px; display: flex; align-items: center; justify-content: center; height: 75px;'><div style='transform: rotate(90deg); white-space: nowrap; font-family: \"Inter\", sans-serif; font-size: 0.58rem; font-weight: 800; color: #4e515d; letter-spacing: 0.1em;'>% LAP TIME</div></div>" if align == "right" else ""
+    
+    # Render the bars HTML
+    bars_html = f"""
+    <div style="display: flex; flex-direction: {bars_flex_dir}; align-items: center; margin-top: 15px; background: rgba(0,0,0,0.15); padding: 8px 12px; border-radius: 4px;">
+        {lbl_left}
+        <div style="flex: 1; {bar_margin}">
+            {_bar_html("FULL THROTTLE", ft, accent)}
+            {_bar_html("HEAVY BRAKING", hb, accent)}
+            {_bar_html("CORNERING", corner, accent)}
+        </div>
+        {lbl_right}
+    </div>
+    """
+    
+    body = f"""
+    <div class="card-container" style="background: #15161d; {border_style} padding: 16px 20px; box-sizing: border-box; height: 100%; display: flex; flex-direction: column; justify-content: space-between; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+        <!-- Top Row: Position, Name, Logo -->
+        <div style="display: flex; flex-direction: {flex_dir}; align-items: center; justify-content: space-between;">
+            <div style="display: flex; flex-direction: {flex_dir}; align-items: center; gap: 16px;">
+                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 4.8rem; line-height: 0.8; font-weight: bold; color: #ffffff;">{pos}</div>
+                <div style="text-align: {text_align};">
+                    <div style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.85rem; color: #8a8d98; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 2px;">{first}</div>
+                    <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; line-height: 0.85; font-weight: 900; color: {accent}; letter-spacing: 0.05em; text-transform: uppercase;">{last}</div>
+                    <div style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 0.65rem; color: #515462; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 4px;">{team}</div>
+                </div>
+            </div>
+            <div style="flex-shrink: 0;">
+                {logo_svg}
+            </div>
+        </div>
+        
+        <!-- Middle Row: Lap Time and Gap -->
+        <div style="display: flex; flex-direction: {flex_dir}; justify-content: space-between; align-items: flex-end; margin-top: 15px; border-top: 1px solid #222530; padding-top: 12px;">
+            <div style="text-align: {text_align};">
+                <div style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.65rem; color: #8a8d98; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 2px;">LAP TIME</div>
+                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; font-weight: bold; font-style: italic; color: #ffffff; letter-spacing: 0.02em; line-height: 1;">{format_laptime(lap_sec)}</div>
+            </div>
+            <div style="text-align: {"right" if align == "left" else "left"};">
+                <div style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.65rem; color: #8a8d98; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 2px;">GAP</div>
+                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; font-weight: bold; font-style: italic; color: {accent}; letter-spacing: 0.02em; line-height: 1;">{gap_text}</div>
+            </div>
+        </div>
+        
+        <!-- Bottom Row: Progress Bars -->
+        {bars_html}
+    </div>
+    """
+    
+    return f"""
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        html, body {{ margin: 0; padding: 0; background: transparent; overflow: hidden; height: 100%; }}
+        .card-container {{ box-sizing: border-box; }}
+    </style>
+    {body}
+    """
 
 def build_circuit_map(
     track: Optional[pd.DataFrame],
@@ -204,9 +307,48 @@ def build_circuit_map(
             j = int(np.argmin(np.abs(arc - td)))
             fig.add_annotation(
                 x=x[j], y=y[j], text=str(n), showarrow=False,
-                font=dict(size=11, color="#ddd", family="DM Mono, monospace"),
-                bgcolor="rgba(0,0,0,0.65)", borderpad=3,
+                font=dict(size=11, color="#ffffff", family="Bebas Neue, sans-serif", weight="bold"),
+                bgcolor="#15161d", bordercolor="#222530", borderwidth=1, borderpad=3,
+                yshift=10, xshift=10
             )
+
+        # Place speed zone labels based on speed data
+        avg_speed = (sp1 + sp2) / 2.0
+        low_peaks, _ = find_peaks(-avg_speed, distance=len(avg_speed)//5, prominence=15)
+        high_peaks, _ = find_peaks(avg_speed, distance=len(avg_speed)//5, prominence=15)
+        
+        labeled_points = []
+        for idx in low_peaks[:2]:
+            if avg_speed[idx] < 140:
+                fig.add_annotation(
+                    x=x[idx], y=y[idx], text="LOW SPEED", showarrow=False,
+                    font=dict(size=8, color="#8a8d98", family="Inter, sans-serif", weight="bold"),
+                    bgcolor="rgba(16,17,22,0.85)", bordercolor="#222530", borderwidth=1, borderpad=3,
+                    yshift=-15, xshift=-15
+                )
+                labeled_points.append(idx)
+                
+        for idx in high_peaks[:2]:
+            if avg_speed[idx] > 240:
+                fig.add_annotation(
+                    x=x[idx], y=y[idx], text="HIGH SPEED", showarrow=False,
+                    font=dict(size=8, color="#ffffff", family="Inter, sans-serif", weight="bold"),
+                    bgcolor="rgba(225,6,0,0.85)" if c1 == RED or c2 == RED else "rgba(16,17,22,0.85)", 
+                    bordercolor="#222530", borderwidth=1, borderpad=3,
+                    yshift=15, xshift=15
+                )
+                labeled_points.append(idx)
+                
+        if len(avg_speed) > 100:
+            for idx in range(len(avg_speed)//3, 2*len(avg_speed)//3, len(avg_speed)//10):
+                if idx not in labeled_points and 160 < avg_speed[idx] < 220:
+                    fig.add_annotation(
+                        x=x[idx], y=y[idx], text="MEDIUM SPEED", showarrow=False,
+                        font=dict(size=8, color="#8a8d98", family="Inter, sans-serif", weight="bold"),
+                        bgcolor="rgba(16,17,22,0.85)", bordercolor="#222530", borderwidth=1, borderpad=3,
+                        yshift=15, xshift=-15
+                    )
+                    break
     else:
         fig.add_trace(go.Scatter(
             x=distance, y=np.zeros_like(distance), mode="lines",
@@ -215,14 +357,13 @@ def build_circuit_map(
 
     fig.update_layout(
         paper_bgcolor=BG, plot_bgcolor=BG,
-        height=340, margin=dict(t=40, b=16, l=16, r=16),
-        title=dict(text=title, font=dict(size=11, color=MUTED, family="DM Mono, monospace"),
+        height=360, margin=dict(t=40, b=16, l=16, r=16),
+        title=dict(text=title, font=dict(size=11, color=MUTED, family="Inter, sans-serif", weight="bold"),
                    x=0.5, xanchor="center"),
         xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
         showlegend=False,
     )
     return fig
-
 
 def build_speed_delta_figure(
     distance: np.ndarray,
@@ -237,98 +378,170 @@ def build_speed_delta_figure(
     delta = cumulative_time_delta(distance, s1, s2)
     turns = detect_turn_distances(distance, (s1 + s2) / 2.0)
     vmax = float(np.nanmax(np.concatenate([s1, s2])))
-    mono = "DM Mono, Courier New, monospace"
-
+    vmin = float(np.nanmin(np.concatenate([s1, s2])))
+    
     fig = make_subplots(
-        rows=2, cols=1, shared_xaxes=True, row_heights=[0.70, 0.30],
-        vertical_spacing=0.05,
+        rows=2, cols=1, shared_xaxes=True, row_heights=[0.72, 0.28],
+        vertical_spacing=0.06,
     )
 
-    # subtle zone washes
-    fig.add_hrect(y0=0, y1=0.45 * vmax, fillcolor="rgba(80,80,80,0.10)", line_width=0, row=1, col=1)
-    fig.add_hrect(y0=0.45 * vmax, y1=0.75 * vmax, fillcolor="rgba(255,235,0,0.05)", line_width=0, row=1, col=1)
-    fig.add_hrect(y0=0.75 * vmax, y1=vmax * 1.05, fillcolor="rgba(225,6,0,0.06)", line_width=0, row=1, col=1)
+    # Shaded columns and turn/speed labels for grouped turns
+    grouped_turns = []
+    i = 0
+    while i < len(turns):
+        t_start = turns[i]
+        t_group = [i + 1]
+        j = i + 1
+        while j < len(turns) and (turns[j] - turns[j-1]) < 180:
+            t_group.append(j + 1)
+            j += 1
+        t_end = turns[j-1] if len(t_group) > 1 else t_start
+        grouped_turns.append((t_start, t_end, t_group))
+        i = j
 
+    for t_start, t_end, t_nums in grouped_turns:
+        pad_start = max(0.0, t_start - 60)
+        pad_end = min(float(distance[-1]), t_end + 60)
+        
+        fig.add_vrect(
+            x0=pad_start, x1=pad_end, 
+            fillcolor="rgba(255,255,255,0.015)", 
+            line_width=0, row=1, col=1
+        )
+        
+        idx_start = np.searchsorted(distance, pad_start)
+        idx_end = np.searchsorted(distance, pad_end)
+        avg_speed_zone = np.mean((s1[idx_start:idx_end] + s2[idx_start:idx_end]) / 2.0)
+        
+        if avg_speed_zone < 130:
+            zone_lbl = "LOW SPEED"
+            zone_color = "#8a8d98"
+        elif avg_speed_zone < 220:
+            zone_lbl = "MEDIUM SPEED"
+            zone_color = "#a8abb6"
+        else:
+            zone_lbl = "HIGH SPEED"
+            zone_color = "#E10600"
+            
+        turn_str = "TURN " + " ".join(map(str, t_nums))
+        mid_x = (t_start + t_end) / 2.0
+        
+        fig.add_annotation(
+            x=mid_x, y=vmax * 1.08, text=zone_lbl, showarrow=False,
+            font=dict(size=7, color=zone_color, family="Inter, sans-serif", weight="bold"),
+            yref="y", row=1, col=1, yshift=15
+        )
+        
+        fig.add_annotation(
+            x=mid_x, y=vmax * 1.08, text=turn_str, showarrow=False,
+            font=dict(size=12, color="#ffffff", family="Bebas Neue, sans-serif", weight="bold"),
+            yref="y", row=1, col=1
+        )
+
+    # Plot speed lines
     fig.add_trace(go.Scatter(
         x=distance, y=s1, mode="lines", name=name1,
-        line=dict(color=c1, width=2.6),
+        line=dict(color=c1, width=3.0),
         hovertemplate="%{y:.0f} km/h<extra>" + name1 + "</extra>",
     ), row=1, col=1)
+    
     fig.add_trace(go.Scatter(
         x=distance, y=s2, mode="lines", name=name2,
-        line=dict(color=c2, width=2.6),
+        line=dict(color=c2, width=3.0),
         hovertemplate="%{y:.0f} km/h<extra>" + name2 + "</extra>",
     ), row=1, col=1)
 
-    for i, td in enumerate(turns, start=1):
-        fig.add_vline(x=td, line=dict(color="#252525", width=1), row=1, col=1)
-        fig.add_vline(x=td, line=dict(color="#252525", width=1), row=2, col=1)
-        fig.add_annotation(
-            x=td, y=vmax * 0.97, text=f"T{i}", showarrow=False,
-            font=dict(size=9, color="#777", family=mono), yref="y",
-        )
+    # Add vertical divider lines for turns
+    for t_val in turns:
+        fig.add_vline(x=t_val, line=dict(color="#222530", width=1.5, dash="dash"), row=1, col=1)
+        fig.add_vline(x=t_val, line=dict(color="#222530", width=1.5, dash="dash"), row=2, col=1)
 
-    # Delta line colored by who is ahead: use two fills
+    # Horizontal zero line for delta plot
+    fig.add_hline(y=0, line=dict(color="#515462", width=2.0), row=2, col=1)
+
+    # Plot delta line (plot negative delta to show lead as positive values)
+    y_delta = -delta
     fig.add_trace(go.Scatter(
-        x=distance, y=delta, mode="lines", name="DELTA",
-        line=dict(color="#ddd", width=1.6),
+        x=distance, y=y_delta, mode="lines", name="DELTA",
+        line=dict(color="#ffffff", width=2.2),
+        fill='tozeroy', fillcolor='rgba(255,255,255,0.02)',
         hovertemplate="%{y:.3f}s<extra>Δ</extra>",
         showlegend=False,
     ), row=2, col=1)
-    fig.add_hline(y=0, line=dict(color="#444", width=1), row=2, col=1)
 
-    # Floating delta numbers in mono — color by which driver is ahead
-    # (negative delta => driver1 faster => c1)
-    n_labels = min(11, max(6, len(turns) + 2))
-    for frac in np.linspace(0.08, 0.95, n_labels):
-        i = int(frac * (len(delta) - 1))
-        val = float(delta[i])
-        col = c1 if val <= 0 else c2
+    # Add delta boxes at the bottom of the Speed plot
+    for t_val in turns:
+        idx = int(np.searchsorted(distance, t_val))
+        if idx >= len(delta):
+            idx = len(delta) - 1
+        t_delta = delta[idx]
+        d_color = c1 if t_delta <= 0 else c2
+        d_text = f"{t_delta:+.3f}"
+        
         fig.add_annotation(
-            x=float(distance[i]),
-            y=float(val),
-            text=f"{val:+.3f}",
-            showarrow=False,
-            font=dict(size=12, color=col, family=mono),
-            yref="y2",
-            yshift=14 if val <= 0 else -14,
+            x=t_val, y=vmax * 0.05 + vmin * 0.95, text=d_text, showarrow=False,
+            font=dict(size=10, color=d_color, family="Inter, sans-serif", weight="bold"),
+            bgcolor="#101116", bordercolor="#222530", borderwidth=1, borderpad=3,
+            yref="y", row=1, col=1
         )
 
-    fig.update_yaxes(
-        title_text="SPEED", title_font=dict(size=10, color=MUTED, family=mono),
-        gridcolor=GRID, tickfont=dict(color="#777", size=9, family=mono), row=1, col=1,
+    # Add large watermarks "FASTER" and "SLOWER" to background of Delta plot
+    fig.add_annotation(
+        text="FASTER", xref="paper", yref="y2", x=0.03, y=max(0.1, float(np.max(y_delta)) * 0.6) if len(y_delta) > 0 else 0.1,
+        showarrow=False, font=dict(size=24, color="rgba(255,255,255,0.035)", family="Bebas Neue, sans-serif", weight="bold"),
+        xanchor="left", yanchor="bottom"
     )
-    fig.update_yaxes(
-        title_text="DELTA", title_font=dict(size=10, color=MUTED, family=mono),
-        gridcolor=GRID, tickfont=dict(color="#777", size=9, family=mono), row=2, col=1,
+    fig.add_annotation(
+        text="SLOWER", xref="paper", yref="y2", x=0.03, y=min(-0.1, float(np.min(y_delta)) * 0.6) if len(y_delta) > 0 else -0.1,
+        showarrow=False, font=dict(size=24, color="rgba(255,255,255,0.035)", family="Bebas Neue, sans-serif", weight="bold"),
+        xanchor="left", yanchor="top"
     )
+
+    # Custom Y-axis tick formatting
+    fig.update_yaxes(
+        tickvals=[int(vmin), int(vmax)],
+        ticktext=[f"{int(vmin)} KM/H", f"{int(vmax)} KM/H"],
+        tickfont=dict(color="#ffffff", size=10, family="Bebas Neue, sans-serif", weight="bold"),
+        gridcolor=GRID, zeroline=False, row=1, col=1
+    )
+    
+    fig.update_yaxes(
+        tickfont=dict(color="#8a8d98", size=9, family="Inter, sans-serif"),
+        gridcolor=GRID, title_text="DELTA (s)", title_font=dict(size=9, color=MUTED, family="Inter, sans-serif"),
+        zeroline=False, row=2, col=1
+    )
+    
     fig.update_xaxes(
-        title_text="DISTANCE (m)", title_font=dict(size=10, color=MUTED, family=mono),
-        gridcolor=GRID, tickfont=dict(color="#777", size=9, family=mono), row=2, col=1,
+        gridcolor=GRID, title_text="DISTANCE (m)", title_font=dict(size=9, color=MUTED, family="Inter, sans-serif"),
+        tickfont=dict(color="#8a8d98", size=9, family="Inter, sans-serif"), row=2, col=1
     )
-    fig.update_xaxes(gridcolor=GRID, tickfont=dict(color="#777", size=9, family=mono), row=1, col=1)
+    fig.update_xaxes(gridcolor=GRID, showticklabels=False, row=1, col=1)
 
     fig.update_layout(
         paper_bgcolor=BG, plot_bgcolor=BG,
-        height=580, margin=dict(t=52, b=42, l=55, r=24),
+        height=580, margin=dict(t=70, b=40, l=55, r=24),
         title=dict(
-            text=f"{race_label.upper()}  ·  QUALIFYING ANALYSIS",
-            font=dict(size=13, color="#aaa", family=mono), x=0, xanchor="left",
+            text=f"{race_label.upper()}  ·  QUALIFYING HEAD-TO-HEAD SPEED & TIME DELTA",
+            font=dict(size=12, color="#8a8d98", family="Inter, sans-serif", weight="bold"), x=0, xanchor="left",
         ),
         legend=dict(
-            orientation="h", y=1.10, x=1, xanchor="right",
-            font=dict(size=11, color="#ccc", family=mono),
+            orientation="h", y=1.04, x=1, xanchor="right",
+            font=dict(size=11, color="#ffffff", family="Bebas Neue, sans-serif"),
             bgcolor="rgba(0,0,0,0)",
         ),
         hovermode="x unified",
-        font=dict(family=mono),
+    )
+
+    # Legend indicators next to delta y-axis
+    fig.add_annotation(
+        text="▲ FASTER", xref="paper", yref="paper", x=-0.045, y=0.18,
+        showarrow=False, font=dict(size=8, color="#8a8d98", family="Inter, sans-serif", weight="bold"),
+        textangle=-90
     )
     fig.add_annotation(
-        text="FASTER", xref="paper", yref="paper", x=0.012, y=0.22,
-        showarrow=False, font=dict(size=9, color="#666", family=mono),
+        text="▼ SLOWER", xref="paper", yref="paper", x=-0.045, y=0.04,
+        showarrow=False, font=dict(size=8, color="#8a8d98", family="Inter, sans-serif", weight="bold"),
+        textangle=-90
     )
-    fig.add_annotation(
-        text="SLOWER", xref="paper", yref="paper", x=0.012, y=0.03,
-        showarrow=False, font=dict(size=9, color="#666", family=mono),
-    )
+
     return fig

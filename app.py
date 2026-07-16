@@ -902,14 +902,6 @@ with st.sidebar:
 if "Quali Lab" in page:
     import quali_lab as ql
 
-    st.markdown(
-        '<div class="strat-hero"><div>'
-        '<div class="strat-hero-title">QUALI LAB</div>'
-        '<div class="strat-hero-sub">Broadcast telemetry · head-to-head · sector delta</div>'
-        '</div></div>',
-        unsafe_allow_html=True,
-    )
-
     qc1, qc2, qc3, qc4 = st.columns([1, 1.2, 1.2, 0.8])
     with qc1:
         q_year = st.selectbox("YEAR", [2024, 2026, 2023, 2022], index=0, key="ql_year")
@@ -963,6 +955,36 @@ if "Quali Lab" in page:
 
         n1 = DRIVER_NAMES.get(q_d1, q_d1)
         n2 = DRIVER_NAMES.get(q_d2, q_d2)
+
+        # F1 TV Style Header
+        circuit_upper = q_race.upper().replace("_", " ")
+        st.markdown(f"""
+        <div style="background: #15161d; border-radius: 4px; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 6px solid #E10600;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <!-- F1 Logo -->
+                <svg viewBox="0 0 120 30" width="80" height="20" style="display: block;">
+                    <path d="M 15 5 L 35 5 L 25 25 L 15 25 Z" fill="#E10600"/>
+                    <path d="M 38 5 L 58 5 L 56 9 L 45 9 L 43 13 L 53 13 L 51 17 L 41 17 L 39 21 L 51 21 L 49 25 L 29 25 Z" fill="#E10600"/>
+                    <path d="M 60 5 C 65 5, 75 5, 75 12 C 75 18, 68 25, 60 25 M 65 5 L 60 25 M 58 25" fill="none" stroke="#E10600" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <div style="width: 1px; height: 20px; background: #222530;"></div>
+                <h1 style="margin: 0; font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; font-weight: 900; color: #ffffff; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1;">
+                    {circuit_upper} - QUALIFYING ANALYSIS
+                </h1>
+            </div>
+            <div>
+                <!-- AWS Logo -->
+                <div style="display: flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 0.65rem; color: #8a8d98; font-weight: 600; text-transform: lowercase;">
+                    <span>powered by</span>
+                    <svg viewBox="0 0 40 24" width="28" height="16" fill="#fff" style="margin-top: 2px;">
+                        <path d="M12.5 13.5c0 1.2-.6 1.9-1.6 1.9-.8 0-1.3-.5-1.5-1.1-.5.7-1.2 1.3-2.2 1.3-1.6 0-2.6-1.1-2.6-2.6 0-2.3 2-3.1 4.5-3.1V9.5c0-.9-.4-1.3-1.3-1.3-.8 0-1.4.3-1.6.8l-1.3-.8c.6-1.1 1.7-1.6 3.1-1.6 2 0 3 1.1 3 2.9v4.2zm-5.3-.2c0 .8.5 1.3 1.2 1.3.8 0 1.4-.6 1.6-1.3v-1.1c-1.6 0-2.8.3-2.8 1.1zM23.1 7.2l1.6 5.8 1.6-5.8h1.8l-2.5 7.8h-1.8L22.2 9l-1.6 6h-1.8l-2.5-7.8h1.8l1.6 5.8 1.6-5.8h1.8zm11 1.8c-.8 0-1.3.3-1.5.8L31.3 9c.6-1.1 1.7-1.6 3.1-1.6 1.8 0 2.8.9 2.8 2.3v3.8c0 1 .1 1.4.3 1.7h-1.8c-.1-.3-.2-.7-.2-1-.5.7-1.2 1.3-2.2 1.3-1.5 0-2.5-1-2.5-2.4 0-1.8 1.4-2.6 3.7-2.6h1v-.5c0-.8-.4-1.2-1.2-1.2zm-.3 4.2c.7 0 1.2-.5 1.4-1.2v-.6h-.8c-1.3 0-1.9.4-1.9 1.2 0 .8.5 1.2 1.3 1.2z" fill="#ffffff"/>
+                        <path d="M6 18c6 2.5 15 4 25 1" fill="none" stroke="#FF9900" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
         st.markdown(
             f'<div class="zone-legend" style="margin:0 0 14px">'
             f'<span class="zone-pill"><span class="zone-dot" style="background:{c1}"></span>{n1}</span>'
@@ -977,7 +999,7 @@ if "Quali Lab" in page:
                 ql.build_driver_card_html(
                     pos1, q_d1, n1, team1, t1s, gap1, ft1, hb1, cnr1, c1, align="left",
                 ),
-                height=320, scrolling=False,
+                height=360, scrolling=False,
             )
         with mid:
             track = ql.load_track_outline(q_year, q_race)
@@ -991,7 +1013,7 @@ if "Quali Lab" in page:
                 ql.build_driver_card_html(
                     pos2, q_d2, n2, team2, t2s, gap2, ft2, hb2, cnr2, c2, align="right",
                 ),
-                height=320, scrolling=False,
+                height=360, scrolling=False,
             )
 
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
