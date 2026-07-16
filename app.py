@@ -13,13 +13,19 @@ from datetime import datetime, timezone
 warnings.filterwarnings('ignore')
 
 os.makedirs('f1_cache', exist_ok=True)
-fastf1.Cache.enable_cache('f1_cache')
+# Streamlit Cloud: prefer /tmp so FastF1 can always write cache during session downloads
+if os.path.isdir('/mount/src') or os.path.isdir('/home/adminuser'):
+    _cache_dir = '/tmp/f1_cache'
+else:
+    _cache_dir = 'f1_cache'
+os.makedirs(_cache_dir, exist_ok=True)
+fastf1.Cache.enable_cache(_cache_dir)
 
 # ─────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────
 st.set_page_config(
-    page_title="F1 Strategy Intelligence",
+    page_title="APEX — F1 Systems",
     page_icon="🏎",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -511,29 +517,101 @@ def ax(title=''):
         title_font=dict(color='#666', size=10, family='monospace')
     )
 
+def _fastest_car_trace(session, driver_code: str):
+    """Return (distance, speed, lap_time_sec) for a driver's fastest lap."""
+    # FastF1 3.x: pick_drivers (plural). Fall back to pick_driver if needed.
+    try:
+        laps = session.laps.pick_drivers(driver_code)
+    except Exception:
+        laps = session.laps.pick_driver(driver_code)
+
+    if laps is None or getattr(laps, 'empty', False):
+        raise ValueError(f"No qualifying laps found for {driver_code}.")
+
+    lap = laps.pick_fastest()
+    if lap is None:
+        raise ValueError(f"No valid fastest lap for {driver_code}.")
+    try:
+        lap_time = lap['LapTime']
+    except Exception:
+        lap_time = None
+    if lap_time is None or pd.isna(lap_time):
+        raise ValueError(f"No valid fastest lap for {driver_code}.")
+
+    # Prefer car data (Speed) — more reliable than get_telemetry() on Cloud
+    try:
+        tel = lap.get_car_data().add_distance()
+    except Exception:
+        tel = lap.get_telemetry().add_distance()
+
+    if tel is None or len(tel) < 20 or 'Speed' not in tel.columns or 'Distance' not in tel.columns:
+        raise ValueError(f"Telemetry incomplete for {driver_code}.")
+
+    t_sec = float(lap_time.total_seconds())
+    return tel['Distance'].to_numpy(dtype=float), tel['Speed'].to_numpy(dtype=float), t_sec
+
+
+@st.cache_data(ttl=60 * 60, show_spinner=False)
+def load_qualy_speed_trace(year: int, race: str, d1: str, d2: str):
+    """Load qualifying speed traces for two drivers. Cached at module level for Cloud stability."""
+    from scipy.interpolate import interp1d
+
+    session = fastf1.get_session(year, race, 'Q')
+    # Full load — partial loads cause DataNotLoadedError on get_car_data / get_telemetry
+    try:
+        session.load()
+    except Exception:
+        # Second attempt with explicit flags (some FastF1 builds behave better this way)
+        session = fastf1.get_session(year, race, 'Q')
+        session.load(laps=True, telemetry=True, weather=False, messages=False)
+
+    # Sanity: ensure timing + car data actually landed
+    if session.laps is None or getattr(session.laps, 'empty', True):
+        raise RuntimeError(
+            f"No lap data for {race} {year} qualifying. "
+            "This circuit/year may not be available from FastF1 yet."
+        )
+
+    d1_dist, d1_spd, t1s = _fastest_car_trace(session, d1)
+    d2_dist, d2_spd, t2s = _fastest_car_trace(session, d2)
+
+    dmin = max(float(np.nanmin(d1_dist)), float(np.nanmin(d2_dist)))
+    dmax = min(float(np.nanmax(d1_dist)), float(np.nanmax(d2_dist)))
+    if not np.isfinite(dmin) or not np.isfinite(dmax) or dmax <= dmin:
+        raise RuntimeError("Could not align distance channels for the two drivers.")
+
+    cd = np.linspace(dmin, dmax, 1500)
+    s1 = interp1d(d1_dist, d1_spd, bounds_error=False, fill_value='extrapolate')(cd)
+    s2 = interp1d(d2_dist, d2_spd, bounds_error=False, fill_value='extrapolate')(cd)
+    return cd, s1, s2, (s1 - s2), t1s, t2s
+
 # ─────────────────────────────────────────
 # SIDEBAR
 # ─────────────────────────────────────────
 with st.sidebar:
 
-    # F1 Logo
+    # Brand mark — minimal wordmark (APEX)
+    logo_mark = ''
     if LOGO_SRC:
-        logo_tag = f'<img src="{LOGO_SRC}" width="68" style="filter:drop-shadow(0 0 10px rgba(232,0,45,0.6));object-fit:contain">'
-    else:
-        logo_tag = '<div style="font-family:Bebas Neue,monospace;font-size:1.6rem;background:#E8002D;color:#fff;padding:4px 12px;border-radius:2px;letter-spacing:0.05em">F1</div>'
+        logo_mark = f'''
+        <img src="{LOGO_SRC}" height="18"
+             style="opacity:0.92;filter:drop-shadow(0 0 8px rgba(232,0,45,0.45));
+                    object-fit:contain;display:block;margin-bottom:14px"/>
+        '''
 
     st.markdown(f"""
-    <div style="padding:1.5rem 24px 0">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
-            {logo_tag}
-            <div>
-                <div style="font-family:'Bebas Neue',monospace;font-size:1.25rem;
-                            color:#ffffff;letter-spacing:0.15em;line-height:1.1">STRATEGY</div>
-                <div style="font-size:0.52rem;color:#444;letter-spacing:0.28em;
-                            text-transform:uppercase;margin-top:3px">Intelligence System</div>
+    <div style="padding:1.75rem 24px 0">
+        {logo_mark}
+        <div style="font-family:'Bebas Neue',monospace;font-size:2.35rem;color:#fff;
+                    letter-spacing:0.22em;line-height:0.92;margin:0">APEX</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+            <div style="height:1px;width:28px;background:#E8002D;flex-shrink:0"></div>
+            <div style="font-size:0.5rem;color:#666;letter-spacing:0.32em;text-transform:uppercase">
+                F1 systems
             </div>
         </div>
-        <div style="height:1px;background:linear-gradient(90deg,#E8002D,transparent);margin:14px 0 18px"></div>
+        <div style="height:1px;background:linear-gradient(90deg,#E8002D,transparent);
+                    margin:18px 0 16px"></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -711,10 +789,9 @@ with st.sidebar:
     # Sidebar footer
     st.markdown("""
     <div style="padding:28px 24px 24px;margin-top:32px;border-top:1px solid #0f0f0f">
-        <div style="text-align:center;font-size:10px;color:#333;letter-spacing:0.12em;line-height:2.4">
+        <div style="text-align:center;font-size:10px;color:#3a3a3a;letter-spacing:0.18em;line-height:2.2">
             FastF1 · scikit-learn · Streamlit<br>
-            <span style="color:#E8002D;font-size:13px">♥</span>
-            <span style="letter-spacing:0.2em;color:#333"> MADE WITH LOVE BY ARIN</span>
+            <span style="color:#666;letter-spacing:0.28em">ENGINEERED BY ARIN</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -987,38 +1064,11 @@ elif "Driver DNA" in page:
         st.session_state.tel_load_requested = True
         st.session_state.tel_params = (tel_year, tel_race, driver1, driver2)
 
-    @st.cache_data(ttl=60 * 60, show_spinner=False)
-    def _load_qualy_telemetry(year: int, race: str, d1: str, d2: str):
-        from scipy.interpolate import interp1d
-        sess = fastf1.get_session(year, race, 'Q')
-        # Be explicit: ensure laps + telemetry are loaded
-        sess.load(laps=True, telemetry=True, weather=False, messages=False)
-
-        lap1 = sess.laps.pick_driver(d1).pick_fastest()
-        lap2 = sess.laps.pick_driver(d2).pick_fastest()
-
-        if lap1 is None or lap2 is None:
-            raise ValueError("No qualifying lap found for one of the drivers.")
-
-        tel1 = lap1.get_telemetry().add_distance()
-        tel2 = lap2.get_telemetry().add_distance()
-        dmin = max(float(tel1['Distance'].min()), float(tel2['Distance'].min()))
-        dmax = min(float(tel1['Distance'].max()), float(tel2['Distance'].max()))
-        cd = np.linspace(dmin, dmax, 1500)
-
-        s1 = interp1d(tel1['Distance'], tel1['Speed'], fill_value='extrapolate')(cd)
-        s2 = interp1d(tel2['Distance'], tel2['Speed'], fill_value='extrapolate')(cd)
-        delt = s1 - s2
-
-        t1s = float(lap1['LapTime'].total_seconds())
-        t2s = float(lap2['LapTime'].total_seconds())
-        return cd, s1, s2, delt, t1s, t2s
-
     if st.session_state.tel_load_requested and st.session_state.tel_params:
         year, race, d1, d2 = st.session_state.tel_params
         with st.spinner(f"Loading {race} {year} qualifying telemetry..."):
             try:
-                cd, s1, s2, delt, t1s, t2s = _load_qualy_telemetry(year, race, d1, d2)
+                cd, s1, s2, delt, t1s, t2s = load_qualy_speed_trace(year, race, d1, d2)
 
                 n1 = DRIVER_NAMES.get(d1, d1)
                 n2 = DRIVER_NAMES.get(d2, d2)
@@ -1063,6 +1113,10 @@ elif "Driver DNA" in page:
                     title_text='Δ Speed',
                     title_font=dict(color='#666', size=10, family='monospace'), row=2, col=1
                 )
+                fig_t.update_xaxes(
+                    title_text='Distance (m)',
+                    title_font=dict(color='#666', size=10, family='monospace'), row=2, col=1
+                )
 
                 fig_t.update_layout(
                     **PLOT_BASE,
@@ -1076,7 +1130,15 @@ elif "Driver DNA" in page:
                 st.plotly_chart(fig_t, use_container_width=True)
 
             except Exception as e:
-                st.error(f"Telemetry error: {str(e)}")
+                # Clear bad cache entry for this combo so a retry can re-download
+                try:
+                    load_qualy_speed_trace.clear()
+                except Exception:
+                    pass
+                st.error(
+                    f"Telemetry error: {e}\n\n"
+                    "Tip: try another circuit/year, or reboot the app so FastF1 can re-download session data."
+                )
 
 # ─────────────────────────────────────────
 # PAGE 3 — STRATEGY SIMULATOR
@@ -1233,8 +1295,8 @@ elif "Strategy Simulator" in page:
 # ─────────────────────────────────────────
 st.markdown("""
 <div class="app-footer">
-  <div class="title">F1 STRATEGY INTELLIGENCE SYSTEM</div>
+  <div class="title">APEX</div>
   <div class="sub">FastF1 · scikit-learn · Streamlit · Plotly · 2022–2026</div>
-  <div class="love"><span style="color:#E8002D;font-size:14px;line-height:1">♥</span> Made with love by Arin</div>
+  <div class="love" style="letter-spacing:0.28em">ENGINEERED BY ARIN</div>
 </div>
 """, unsafe_allow_html=True)
