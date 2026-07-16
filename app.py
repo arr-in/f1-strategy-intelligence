@@ -25,7 +25,7 @@ fastf1.Cache.enable_cache(_cache_dir)
 # PAGE CONFIG
 # ─────────────────────────────────────────
 st.set_page_config(
-    page_title="APEX — F1 Systems",
+    page_title="STRAT — AI-powered Formula 1 Analytics",
     page_icon="🏎",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -122,17 +122,13 @@ st.markdown("""
 }
 
 .stApp {
-    background-color: #060606 !important;
-    background-image:
-        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
-    background-size: 44px 44px;
+    background-color: #0B0B0B !important;
+    background-image: none !important;
 }
 
 .main .block-container {
-    padding: 2.5rem 3rem 4rem !important;
-    max-width: 1400px !important;
-    padding-bottom: 7rem !important; /* space for fixed footer */
+    padding: 2rem 2.75rem 5.5rem !important;
+    max-width: 1480px !important;
 }
 
 /* smoother overall */
@@ -140,8 +136,8 @@ st.markdown("""
 
 /* ── SIDEBAR ── */
 [data-testid="stSidebar"] {
-    background: #080808 !important;
-    border-right: 1px solid #141414 !important;
+    background: #0B0B0B !important;
+    border-right: 1px solid #161616 !important;
     min-width: 280px !important;
     max-width: 280px !important;
 }
@@ -258,8 +254,8 @@ button[kind="headerNoPadding"],
 }
 [data-testid="stSidebar"] .stRadio label:has(input:checked) {
     color: #ffffff !important;
-    border-left-color: #E8002D !important;
-    background: rgba(232,0,45,0.06) !important;
+    border-left-color: #E10600 !important;
+    background: rgba(225,6,0,0.07) !important;
 }
 
 /* ── HIDE STREAMLIT CHROME ── */
@@ -444,6 +440,47 @@ button[kind="headerNoPadding"],
     padding: 1.25rem;
     height: 100%;
 }
+
+/* ── STRAT broadcast cards ── */
+.strat-card {
+    background: #111111;
+    border: 1px solid #1c1c1c;
+    border-radius: 2px;
+    padding: 1.35rem 1.4rem 1.5rem;
+    height: 100%;
+    animation: stratFade 0.45s ease both;
+}
+.strat-hero {
+    display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+    margin-bottom: 1.25rem;
+}
+.strat-hero-title {
+    font-family:'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 0.08em;
+    color: #fff;
+    line-height: 0.92;
+    margin: 0;
+}
+.strat-hero-sub {
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+    color: #666;
+    text-transform: uppercase;
+    margin-top: 8px;
+}
+.zone-legend {
+    display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+    font-size:0.58rem; letter-spacing:0.16em; color:#777; text-transform:uppercase;
+}
+.zone-pill {
+    display:inline-flex; align-items:center; gap:6px;
+}
+.zone-dot { width:10px; height:3px; display:inline-block; }
+@keyframes stratFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -498,13 +535,13 @@ def hex_to_rgba(h, a=0.2):
     return f'rgba({r},{g},{b},{a})'
 
 PLOT_BASE = dict(
-    plot_bgcolor='#080808',
-    paper_bgcolor='#080808',
-    font=dict(color='#ffffff', family='monospace', size=11),
-    hoverlabel=dict(bgcolor='#0f0f0f', bordercolor='#222',
-                    font=dict(color='#fff', size=11, family='monospace')),
-    legend=dict(bgcolor='rgba(8,8,8,0.95)', bordercolor='#1a1a1a',
-                borderwidth=1, font=dict(color='#888', size=10, family='monospace')),
+    plot_bgcolor='#0B0B0B',
+    paper_bgcolor='#0B0B0B',
+    font=dict(color='#ffffff', family='DM Mono', size=11),
+    hoverlabel=dict(bgcolor='#111', bordercolor='#222',
+                    font=dict(color='#fff', size=11, family='DM Mono')),
+    legend=dict(bgcolor='rgba(11,11,11,0.95)', bordercolor='#1a1a1a',
+                borderwidth=1, font=dict(color='#888', size=10, family='DM Mono')),
     margin=dict(t=50, b=45, l=55, r=20),
 )
 
@@ -602,28 +639,25 @@ def load_qualy_speed_trace(year: int, race: str, d1: str, d2: str):
 # ─────────────────────────────────────────
 with st.sidebar:
 
-    # Brand mark — minimal wordmark (APEX)
+    # Brand mark — STRAT
     logo_mark = ''
     if LOGO_SRC:
         logo_mark = f'''
-        <img src="{LOGO_SRC}" height="18"
-             style="opacity:0.92;filter:drop-shadow(0 0 8px rgba(232,0,45,0.45));
-                    object-fit:contain;display:block;margin-bottom:14px"/>
+        <img src="{LOGO_SRC}" height="16"
+             style="opacity:0.9;filter:drop-shadow(0 0 8px rgba(225,6,0,0.4));
+                    object-fit:contain;display:block;margin-bottom:16px"/>
         '''
 
     st.markdown(f"""
     <div style="padding:1.75rem 24px 0">
         {logo_mark}
-        <div style="font-family:'Bebas Neue',monospace;font-size:2.35rem;color:#fff;
-                    letter-spacing:0.22em;line-height:0.92;margin:0">APEX</div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
-            <div style="height:1px;width:28px;background:#E8002D;flex-shrink:0"></div>
-            <div style="font-size:0.5rem;color:#666;letter-spacing:0.32em;text-transform:uppercase">
-                F1 systems
-            </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:#fff;
+                    letter-spacing:0.28em;line-height:0.9;margin:0">STRAT</div>
+        <div style="margin-top:10px;font-size:0.52rem;color:#666;letter-spacing:0.18em;
+                    text-transform:uppercase;line-height:1.55;max-width:210px">
+            AI-powered Formula 1 Analytics
         </div>
-        <div style="height:1px;background:linear-gradient(90deg,#E8002D,transparent);
-                    margin:18px 0 16px"></div>
+        <div style="height:2px;width:42px;background:#E10600;margin:18px 0 16px"></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -771,8 +805,11 @@ with st.sidebar:
     # Navigation
     st.markdown('<div style="padding:0 24px 6px"><div class="sidebar-eyebrow">NAVIGATION</div></div>',
                 unsafe_allow_html=True)
-    page = st.radio("", ["🏁  Race Strategy", "🧬  Driver DNA", "🔮  Strategy Simulator"],
-                    label_visibility="collapsed")
+    page = st.radio(
+        "",
+        ["📡  Quali Lab", "🏁  Race Strategy", "🧬  Driver DNA", "🔮  Strategy Simulator"],
+        label_visibility="collapsed",
+    )
 
     # Data coverage
     st.markdown("""
@@ -809,9 +846,128 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
+# PAGE 0 — QUALI LAB (broadcast telemetry)
+# ─────────────────────────────────────────
+if "Quali Lab" in page:
+    import quali_lab as ql
+
+    st.markdown("""
+    <div class="strat-hero">
+      <div>
+        <div class="strat-hero-title">QUALI LAB</div>
+        <div class="strat-hero-sub">Broadcast telemetry · head-to-head · sector delta</div>
+      </div>
+      <div class="zone-legend">
+        <span class="zone-pill"><span class="zone-dot" style="background:#E10600"></span> High speed</span>
+        <span class="zone-pill"><span class="zone-dot" style="background:#FFEB00"></span> Medium</span>
+        <span class="zone-pill"><span class="zone-dot" style="background:#3A3A3A"></span> Low speed</span>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    qc1, qc2, qc3, qc4 = st.columns([1, 1.2, 1.2, 0.8])
+    with qc1:
+        q_year = st.selectbox("YEAR", [2024, 2026, 2023, 2022], index=0, key="ql_year")
+    with qc2:
+        q_race = st.selectbox("CIRCUIT", AVAILABLE_RACES[q_year], key="ql_race")
+    tel_path = _telemetry_csv_path(q_year, q_race)
+    drivers_in_session = []
+    if os.path.exists(tel_path):
+        drivers_in_session = sorted(pd.read_csv(tel_path)["Driver"].unique().tolist())
+    if not drivers_in_session:
+        drivers_in_session = sorted(driver_dna["driver"].unique().tolist())
+
+    def _drv_label(code):
+        return f"{DRIVER_NAMES.get(code, code)} ({code})"
+
+    default_a = next((d for d in ["LEC", "VER", "NOR", "HAM"] if d in drivers_in_session), drivers_in_session[0])
+    default_b = next((d for d in ["SAI", "HAM", "PIA", "RUS", "VER"] if d in drivers_in_session and d != default_a), drivers_in_session[-1])
+    labels = [_drv_label(d) for d in drivers_in_session]
+    label_to_code = {_drv_label(d): d for d in drivers_in_session}
+
+    with qc3:
+        d1_lab = st.selectbox("DRIVER A", labels, index=labels.index(_drv_label(default_a)), key="ql_d1")
+    with qc4:
+        d2_lab = st.selectbox(
+            "DRIVER B", labels,
+            index=labels.index(_drv_label(default_b)) if _drv_label(default_b) in labels else 0,
+            key="ql_d2",
+        )
+    q_d1 = label_to_code[d1_lab]
+    q_d2 = label_to_code[d2_lab]
+
+    try:
+        cd, s1, s2, _, t1s, t2s = load_qualy_speed_trace(q_year, q_race, q_d1, q_d2)
+        ft1, hb1, cnr1 = ql.drive_style_from_speed(s1)
+        ft2, hb2, cnr2 = ql.drive_style_from_speed(s2)
+        gap = t1s - t2s
+        if abs(gap) < 1e-4:
+            gap1, gap2 = "LEADER", "LEADER"
+        elif gap < 0:
+            gap1, gap2 = "LEADER", f"+{abs(gap):.3f}s"
+        else:
+            gap1, gap2 = f"+{abs(gap):.3f}s", "LEADER"
+
+        # team colors from DNA when possible
+        def _team_color(code, fallback):
+            row = driver_dna[driver_dna["driver"] == code]
+            if not row.empty:
+                return TEAM_COLORS.get(row.iloc[0]["team"], fallback)
+            return fallback
+
+        c1 = _team_color(q_d1, ql.RED)
+        c2 = _team_color(q_d2, ql.YELLOW)
+        # ensure contrast if same team
+        if c1 == c2:
+            c2 = ql.YELLOW if c1 == ql.RED else ql.RED
+
+        team1 = driver_dna[driver_dna["driver"] == q_d1]["team"].iloc[0] if not driver_dna[driver_dna["driver"] == q_d1].empty else "—"
+        team2 = driver_dna[driver_dna["driver"] == q_d2]["team"].iloc[0] if not driver_dna[driver_dna["driver"] == q_d2].empty else "—"
+
+        pos1, pos2 = (1, 2) if t1s <= t2s else (2, 1)
+
+        left, mid, right = st.columns([1.15, 1.0, 1.15])
+        with left:
+            st.markdown(
+                ql.build_driver_card_html(
+                    pos1, q_d1, DRIVER_NAMES.get(q_d1, q_d1), team1, t1s, gap1,
+                    ft1, hb1, cnr1, c1, align="left",
+                ),
+                unsafe_allow_html=True,
+            )
+        with mid:
+            track = ql.load_track_outline(q_year, q_race)
+            map_fig = ql.build_circuit_map(
+                track, cd, (s1 + s2) / 2.0, c1, c2,
+                f"{q_race.upper()}  ·  TRACK MAP",
+            )
+            st.plotly_chart(map_fig, use_container_width=True, config={"displayModeBar": False})
+        with right:
+            st.markdown(
+                ql.build_driver_card_html(
+                    pos2, q_d2, DRIVER_NAMES.get(q_d2, q_d2), team2, t2s, gap2,
+                    ft2, hb2, cnr2, c2, align="right",
+                ),
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+        fig = ql.build_speed_delta_figure(
+            cd, s1, s2,
+            DRIVER_NAMES.get(q_d1, q_d1),
+            DRIVER_NAMES.get(q_d2, q_d2),
+            c1, c2,
+            f"{q_race} {q_year}",
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    except Exception as e:
+        st.error(f"Quali Lab error: {e}")
+
+# ─────────────────────────────────────────
 # PAGE 1 — RACE STRATEGY
 # ─────────────────────────────────────────
-if "Race Strategy" in page:
+elif "Race Strategy" in page:
     st.markdown("""
     <div style="margin-bottom:1.5rem">
         <div class="page-title">RACE STRATEGY</div>
@@ -1299,8 +1455,8 @@ elif "Strategy Simulator" in page:
 # ─────────────────────────────────────────
 st.markdown("""
 <div class="app-footer">
-  <div class="title">APEX</div>
-  <div class="sub">FastF1 · scikit-learn · Streamlit · Plotly · 2022–2026</div>
+  <div class="title">STRAT</div>
+  <div class="sub">AI-powered Formula 1 Analytics · FastF1 · scikit-learn · Streamlit · Plotly</div>
   <div class="love" style="letter-spacing:0.28em">ENGINEERED BY ARIN</div>
 </div>
 """, unsafe_allow_html=True)
