@@ -141,6 +141,82 @@ st.markdown("""
 /* smoother overall */
 * { scroll-behavior: smooth; }
 
+/* ── F1 SCROLL RACER ── */
+.scroll-racer {
+    --car-h: 54px;
+    position: fixed;
+    top: 86px;
+    right: 7px;
+    width: 28px;
+    height: calc(100vh - 128px);
+    z-index: 998;
+    pointer-events: none;
+    opacity: 0.92;
+}
+.scroll-racer::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, transparent, #242424 9%, #242424 91%, transparent);
+}
+.scroll-racer__progress {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%) scaleY(0.02);
+    transform-origin: top;
+    background: linear-gradient(180deg, #E10600, #ff2d2d);
+    box-shadow: 0 0 14px rgba(225,6,0,0.48);
+    animation: scrollRacerProgress linear both;
+    animation-timeline: scroll(root);
+}
+.scroll-racer__car {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 28px;
+    height: var(--car-h);
+    transform: translateX(-50%);
+    color: #E10600;
+    filter: drop-shadow(0 0 8px rgba(225,6,0,0.62)) drop-shadow(0 8px 14px rgba(0,0,0,0.72));
+    animation: scrollRacerDrive linear both;
+    animation-timeline: scroll(root);
+}
+.scroll-racer__car svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+@keyframes scrollRacerDrive {
+    from { top: 0; }
+    to { top: calc(100% - var(--car-h)); }
+}
+@keyframes scrollRacerProgress {
+    from { transform: translateX(-50%) scaleY(0.02); }
+    to { transform: translateX(-50%) scaleY(1); }
+}
+@supports not (animation-timeline: scroll(root)) {
+    .scroll-racer__car {
+        top: 42%;
+        animation: none;
+    }
+    .scroll-racer__progress {
+        transform: translateX(-50%) scaleY(0.45);
+        animation: none;
+    }
+}
+@media (max-width: 1100px), (prefers-reduced-motion: reduce) {
+    .scroll-racer {
+        display: none;
+    }
+}
+
 /* ── SIDEBAR ── */
 [data-testid="stSidebar"],
 [data-testid="stSidebarUserContent"],
@@ -521,6 +597,23 @@ button[kind="headerNoPadding"],
   to { opacity: 1; transform: none; }
 }
 </style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="scroll-racer" aria-hidden="true">
+  <div class="scroll-racer__progress"></div>
+  <div class="scroll-racer__car">
+    <svg viewBox="0 0 28 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 2L19 13V35L14 52L9 35V13L14 2Z" fill="currentColor"/>
+      <path d="M11 15H17L16 31H12L11 15Z" fill="#111111"/>
+      <path d="M7 11H21L24 17V22H4V17L7 11Z" fill="#f4f4f4"/>
+      <path d="M5 32H23L26 39V44H2V39L5 32Z" fill="#f4f4f4"/>
+      <path d="M3 18H8V31H3V18ZM20 18H25V31H20V18Z" fill="#111111"/>
+      <path d="M1 37H7V49H1V37ZM21 37H27V49H21V37Z" fill="#111111"/>
+      <path d="M13 5H15V13H13V5ZM13 35H15V47H13V35Z" fill="#ffffff"/>
+    </svg>
+  </div>
+</div>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
