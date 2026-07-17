@@ -134,7 +134,7 @@ st.markdown("""
 }
 
 .main .block-container {
-    padding: 2rem 2.75rem 5.5rem !important;
+    padding: 0.9rem 2.75rem 5.5rem !important;
     max-width: 1480px !important;
 }
 
@@ -143,73 +143,49 @@ st.markdown("""
 
 /* ── F1 SCROLL RACER ── */
 .scroll-racer {
-    --car-h: 54px;
+    --car-h: 42px;
+    --scroll-racer-progress: 0.02;
+    --scroll-racer-y: 0px;
     position: fixed;
-    top: 86px;
-    right: 7px;
-    width: 28px;
-    height: calc(100vh - 128px);
-    z-index: 998;
+    top: 24px;
+    right: 3px;
+    width: 18px;
+    height: calc(100vh - 56px);
+    z-index: 1002;
     pointer-events: none;
-    opacity: 0.92;
+    opacity: 1;
 }
 .scroll-racer::before {
     content: "";
     position: absolute;
-    top: 0;
-    bottom: 0;
+    inset: 2px 0;
     left: 50%;
-    width: 2px;
+    width: 1px;
     transform: translateX(-50%);
-    background: linear-gradient(180deg, transparent, #242424 9%, #242424 91%, transparent);
+    background: #2a2a2a;
 }
 .scroll-racer__progress {
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: 2px;
+    bottom: 2px;
     left: 50%;
-    width: 2px;
-    transform: translateX(-50%) scaleY(0.02);
+    width: 1px;
+    transform: translateX(-50%) scaleY(var(--scroll-racer-progress));
     transform-origin: top;
-    background: linear-gradient(180deg, #E10600, #ff2d2d);
-    box-shadow: 0 0 14px rgba(225,6,0,0.48);
-    animation: scrollRacerProgress linear both;
-    animation-timeline: scroll(root);
+    background: #E10600;
 }
 .scroll-racer__car {
     position: absolute;
-    top: 0;
     left: 50%;
-    width: 28px;
+    top: 0;
+    width: 18px;
     height: var(--car-h);
-    transform: translateX(-50%);
-    color: #E10600;
-    filter: drop-shadow(0 0 8px rgba(225,6,0,0.62)) drop-shadow(0 8px 14px rgba(0,0,0,0.72));
-    animation: scrollRacerDrive linear both;
-    animation-timeline: scroll(root);
+    transform: translate(-50%, var(--scroll-racer-y));
 }
 .scroll-racer__car svg {
     display: block;
     width: 100%;
     height: 100%;
-}
-@keyframes scrollRacerDrive {
-    from { top: 0; }
-    to { top: calc(100% - var(--car-h)); }
-}
-@keyframes scrollRacerProgress {
-    from { transform: translateX(-50%) scaleY(0.02); }
-    to { transform: translateX(-50%) scaleY(1); }
-}
-@supports not (animation-timeline: scroll(root)) {
-    .scroll-racer__car {
-        top: 42%;
-        animation: none;
-    }
-    .scroll-racer__progress {
-        transform: translateX(-50%) scaleY(0.45);
-        animation: none;
-    }
 }
 @media (max-width: 1100px), (prefers-reduced-motion: reduce) {
     .scroll-racer {
@@ -222,7 +198,7 @@ st.markdown("""
 [data-testid="stSidebarUserContent"],
 [data-testid="stSidebar"] > div {
     background: #0B0B0B !important;
-    border-right: 1px solid #161616 !important;
+    border-right: 0 !important;
     min-width: 280px !important;
     max-width: 280px !important;
     overflow: hidden !important;
@@ -231,7 +207,7 @@ st.markdown("""
     padding: 0 !important;
 }
 .sidebar-brand {
-    padding: 1.55rem 24px 1.1rem !important;
+    padding: 0.8rem 24px 0.95rem !important;
     border-bottom: 1px solid #141414 !important;
     margin-bottom: 15px !important;
     background: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0) 100%) !important;
@@ -244,6 +220,19 @@ st.markdown("""
     object-fit: contain !important;
     object-position: left center !important;
     filter: drop-shadow(0 8px 18px rgba(0,0,0,0.4)) !important;
+}
+.sidebar-track-divider {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 280px;
+    width: 18px;
+    z-index: 1001;
+    pointer-events: none;
+    background-color: #0B0B0B;
+    background-image: conic-gradient(#F5F5F5 25%, #0B0B0B 0 50%, #F5F5F5 0 75%, #0B0B0B 0);
+    background-size: 12px 12px;
+    background-position: center top;
 }
 .sidebar-brand-fallback {
     font-family: 'Bebas Neue', sans-serif !important;
@@ -370,7 +359,10 @@ button[kind="headerNoPadding"],
 }
 
 /* ── HIDE STREAMLIT CHROME ── */
-#MainMenu, footer, header { visibility: hidden; }
+#MainMenu, footer { visibility: hidden; }
+header[data-testid="stHeader"] {
+    display: none !important;
+}
 .stDeployButton { display: none !important; }
 
 /* ── FLIP CLOCK IFRAME (components.html) ── */
@@ -382,8 +374,8 @@ button[kind="headerNoPadding"],
 /* ── FIXED FOOTER (always at bottom) ── */
 .app-footer {
     position: fixed;
-    left: 280px;  /* sidebar width */
-    right: 0;
+    left: 298px;
+    right: 156px;
     bottom: 0;
     z-index: 999;
     background: rgba(11,11,11,0.95) !important;
@@ -421,7 +413,8 @@ button[kind="headerNoPadding"],
     text-transform:uppercase;
 }
 @media (max-width: 900px) {
-  .app-footer { left: 0; }
+  .app-footer { left: 0; right: 0; }
+  .sidebar-track-divider { display: none; }
 }
 
 /* ── SIDEBAR TEXT ── */
@@ -600,21 +593,82 @@ button[kind="headerNoPadding"],
 """, unsafe_allow_html=True)
 
 st.markdown("""
+<div class="sidebar-track-divider" aria-hidden="true"></div>
 <div class="scroll-racer" aria-hidden="true">
   <div class="scroll-racer__progress"></div>
   <div class="scroll-racer__car">
-    <svg viewBox="0 0 28 54" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M14 2L19 13V35L14 52L9 35V13L14 2Z" fill="currentColor"/>
-      <path d="M11 15H17L16 31H12L11 15Z" fill="#111111"/>
-      <path d="M7 11H21L24 17V22H4V17L7 11Z" fill="#f4f4f4"/>
-      <path d="M5 32H23L26 39V44H2V39L5 32Z" fill="#f4f4f4"/>
-      <path d="M3 18H8V31H3V18ZM20 18H25V31H20V18Z" fill="#111111"/>
-      <path d="M1 37H7V49H1V37ZM21 37H27V49H21V37Z" fill="#111111"/>
-      <path d="M13 5H15V13H13V5ZM13 35H15V47H13V35Z" fill="#ffffff"/>
+    <svg viewBox="0 0 18 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 1H14V4H4V1Z" fill="#F4F4F4"/>
+      <path d="M6.5 4H11.5L13 13V28L11.5 39H6.5L5 28V13L6.5 4Z" fill="#E10600"/>
+      <path d="M7.8 7H10.2L11 20H7L7.8 7Z" fill="#101010"/>
+      <path d="M2.5 11H15.5V14H2.5V11Z" fill="#F4F4F4"/>
+      <path d="M0 14H5V24H0V14ZM13 14H18V24H13V14Z" fill="#101010"/>
+      <path d="M0 27H5V36H0V27ZM13 27H18V36H13V27Z" fill="#101010"/>
+      <path d="M3 37H15V40H3V37Z" fill="#F4F4F4"/>
+      <path d="M8 4H10V39H8V4Z" fill="#FFFFFF" fill-opacity="0.85"/>
     </svg>
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+components.html("""
+<script>
+(() => {
+  const appWindow = window.parent;
+  const appDocument = appWindow.document;
+  const cleanupKey = "__stratScrollRacerCleanup";
+
+  if (appWindow[cleanupKey]) appWindow[cleanupKey]();
+
+  const getScrollRoot = () => {
+    const candidates = [
+      appDocument.querySelector('[data-testid="stAppViewContainer"]'),
+      appDocument.scrollingElement,
+      appDocument.documentElement,
+      appDocument.body,
+    ].filter(Boolean);
+
+    return candidates.reduce((current, candidate) =>
+      (candidate.scrollHeight - candidate.clientHeight) > (current.scrollHeight - current.clientHeight)
+        ? candidate
+        : current
+    );
+  };
+
+  let animationFrame;
+  const updateRacer = () => {
+    animationFrame = undefined;
+    const racer = appDocument.querySelector('.scroll-racer');
+    const car = racer?.querySelector('.scroll-racer__car');
+    const scrollRoot = getScrollRoot();
+    if (!racer || !car || !scrollRoot) return;
+
+    const scrollRange = Math.max(scrollRoot.scrollHeight - scrollRoot.clientHeight, 0);
+    const scrollTop = scrollRoot.scrollTop || appWindow.scrollY || 0;
+    const progress = scrollRange ? Math.min(Math.max(scrollTop / scrollRange, 0), 1) : 0;
+    const travel = Math.max(racer.clientHeight - car.clientHeight, 0);
+
+    racer.style.setProperty('--scroll-racer-progress', String(Math.max(progress, 0.02)));
+    racer.style.setProperty('--scroll-racer-y', `${Math.round(progress * travel)}px`);
+  };
+
+  const requestUpdate = () => {
+    if (!animationFrame) animationFrame = appWindow.requestAnimationFrame(updateRacer);
+  };
+
+  appDocument.addEventListener('scroll', requestUpdate, true);
+  appWindow.addEventListener('resize', requestUpdate);
+  const observer = new appWindow.ResizeObserver(requestUpdate);
+  observer.observe(appDocument.documentElement);
+  appWindow[cleanupKey] = () => {
+    appDocument.removeEventListener('scroll', requestUpdate, true);
+    appWindow.removeEventListener('resize', requestUpdate);
+    observer.disconnect();
+  };
+  requestUpdate();
+})();
+</script>
+""", height=0, width=0)
 
 # ─────────────────────────────────────────
 # LOAD DATA + MODELS
