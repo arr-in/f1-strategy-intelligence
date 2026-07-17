@@ -331,8 +331,8 @@ def build_driver_card_html(
         html, body {{ margin: 0; padding: 0; background: transparent; overflow: hidden; height: 100%; }}
         .card-container {{
             box-sizing: border-box;
-            animation: card-enter 0.46s cubic-bezier(0.22, 1, 0.36, 1) both;
-            transition: transform 0.24s ease, box-shadow 0.24s ease;
+            animation: card-enter 0.72s 0.14s cubic-bezier(0.22, 1, 0.36, 1) both;
+            transition: transform 0.36s ease 0.05s, box-shadow 0.36s ease;
         }}
         .card-container:hover {{
             transform: translateY(-3px);
@@ -352,7 +352,7 @@ def build_driver_card_html(
             object-fit: contain;
             display: block;
             filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.38));
-            transition: transform 0.24s ease, filter 0.24s ease;
+            transition: transform 0.36s ease 0.05s, filter 0.36s ease;
         }}
         .card-container:hover .team-logo-slot--image img {{
             transform: scale(1.035);

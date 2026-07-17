@@ -134,24 +134,24 @@ st.markdown("""
 }
 
 .main .block-container {
-    padding: 0.9rem 2.75rem 5.5rem !important;
+    padding: 0.9rem 2.75rem 7rem !important;
     max-width: 1480px !important;
 }
 
 /* ── MOTION SYSTEM ── */
 * { scroll-behavior: smooth; }
 @keyframes stratEnter {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"] {
-    animation: stratEnter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: stratEnter 0.68s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 [data-testid="stPlotlyChart"],
 [data-testid="stDataFrame"],
 [data-testid="stExpander"],
 [data-testid="stAlert"] {
-    transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+    transition: transform 0.34s ease 0.06s, border-color 0.34s ease, box-shadow 0.34s ease;
 }
 [data-testid="stPlotlyChart"]:hover,
 [data-testid="stDataFrame"]:hover,
@@ -256,7 +256,7 @@ st.markdown("""
     top: 0;
     bottom: 0;
     left: 280px;
-    width: 12px;
+    width: 16px;
     z-index: 1001;
     pointer-events: none;
     background-color: #0B0B0B;
@@ -288,7 +288,7 @@ button[kind="headerNoPadding"],
     border-top: 2px solid #1e1e1e !important;
     border-radius: 3px !important;
     padding: 1rem 1.25rem !important;
-    transition: transform 0.22s ease, border-color 0.22s ease, border-top-color 0.22s ease, box-shadow 0.22s ease !important;
+    transition: transform 0.34s ease 0.04s, border-color 0.34s ease, border-top-color 0.34s ease, box-shadow 0.34s ease !important;
 }
 [data-testid="metric-container"]:hover {
     border-top-color: #E8002D !important;
@@ -313,7 +313,7 @@ button[kind="headerNoPadding"],
     border: 1px solid #222 !important;
     border-radius: 3px !important;
     color: #cccccc !important;
-    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
+    transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease 0.04s !important;
 }
 .stSelectbox > div > div:hover {
     border-color: #393939 !important;
@@ -331,7 +331,7 @@ button[kind="headerNoPadding"],
 }
 .stSlider > div > div > div { background: #E8002D !important; }
 .stSlider [role="slider"] {
-    transition: box-shadow 0.18s ease, transform 0.18s ease !important;
+    transition: box-shadow 0.28s ease, transform 0.28s ease 0.04s !important;
 }
 .stSlider [role="slider"]:hover,
 .stSlider [role="slider"]:focus-visible {
@@ -351,7 +351,7 @@ button[kind="headerNoPadding"],
     padding: 0.65rem 1.5rem !important;
     text-transform: uppercase !important;
     width: 100% !important;
-    transition: all 0.2s ease !important;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease 0.04s, box-shadow 0.3s ease !important;
 }
 .stButton > button:hover {
     background: #E8002D !important;
@@ -366,7 +366,7 @@ button[kind="headerNoPadding"],
 
 /* Cards: add breathing room + subtle lift */
 .driver-card, .decision-box, .analysis-box {
-    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    transition: transform 0.34s ease 0.05s, border-color 0.34s ease, box-shadow 0.34s ease;
 }
 .driver-card:hover, .decision-box:hover, .analysis-box:hover {
     transform: translateY(-2px);
@@ -391,7 +391,7 @@ button[kind="headerNoPadding"],
     letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
     cursor: pointer !important;
-    transition: all 0.15s ease !important;
+    transition: color 0.28s ease, border-left-color 0.28s ease, background-color 0.28s ease, transform 0.28s ease 0.04s !important;
     margin: 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
@@ -409,7 +409,7 @@ button[kind="headerNoPadding"],
 
 /* ── TABS & EXPANDERS ── */
 [data-testid="stTabs"] [role="tab"] {
-    transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease !important;
+    transition: color 0.3s ease, background-color 0.3s ease, transform 0.3s ease 0.04s !important;
 }
 [data-testid="stTabs"] [role="tab"]:hover {
     color: #ffffff !important;
@@ -419,7 +419,7 @@ button[kind="headerNoPadding"],
     border-color: #1b1b1b !important;
 }
 [data-testid="stExpander"] summary {
-    transition: color 0.2s ease, background-color 0.2s ease !important;
+    transition: color 0.3s ease, background-color 0.3s ease !important;
 }
 [data-testid="stExpander"]:hover summary {
     color: #ffffff !important;
@@ -442,18 +442,79 @@ header[data-testid="stHeader"] {
 /* ── FIXED FOOTER (always at bottom) ── */
 .app-footer {
     position: fixed;
-    left: 292px;
-    right: 156px;
+    left: 296px;
+    right: 112px;
     bottom: 0;
     z-index: 999;
     background: rgba(11,11,11,0.95) !important;
     backdrop-filter: blur(10px);
     border-top: 1px solid #141414 !important;
-    padding: 0.6rem 2.75rem 0.5rem !important;
+    min-height: 48px;
+    padding: 0.45rem 2.5rem !important;
     display: flex !important;
-    justify-content: space-between !important;
     align-items: center !important;
-    flex-wrap: wrap !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+.app-footer__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1480px;
+    margin: 0 auto;
+    gap: 18px;
+    min-width: 0;
+}
+.app-footer__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    overflow: hidden;
+}
+.app-footer__brand-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: #515462;
+    flex: 0 0 auto;
+}
+.app-footer__meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.62rem;
+    color: #3a3d46;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.app-footer__love {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    color: #8a8d98;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+.app-footer__heart {
+    width: 10px;
+    height: 10px;
+    fill: #E10600;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 1px 0 2px;
+}
+.app-footer__signature {
+    font-weight: 700;
+    color: #bbbbbb;
+    margin-left: 6px;
+    text-transform: uppercase;
 }
 .app-footer .title {
     font-family:'Bebas Neue', monospace;
@@ -1709,16 +1770,16 @@ elif "Strategy Simulator" in page:
 # ─────────────────────────────────────────
 st.markdown("""
 <div class="app-footer">
-  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1480px; margin: 0 auto; flex-wrap: wrap; gap: 10px;">
-    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-      <span style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; font-weight: 900; letter-spacing: 0.05em; color: #515462;">STRAT</span>
-      <span style="font-family: 'Inter', sans-serif; font-size: 0.62rem; color: #3a3d46; letter-spacing: 0.05em; text-transform: uppercase;">AI-powered Formula 1 Analytics · FastF1 · scikit-learn · Streamlit · Plotly</span>
+  <div class="app-footer__inner">
+    <div class="app-footer__brand">
+      <span class="app-footer__brand-name">STRAT</span>
+      <span class="app-footer__meta">AI-powered Formula 1 Analytics · FastF1 · scikit-learn · Streamlit · Plotly</span>
     </div>
-    <div style="font-family: 'Inter', sans-serif; font-size: 0.65rem; color: #8a8d98; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px;">
+    <div class="app-footer__love">
       <span>Built for the</span>
-      <svg viewBox="0 0 24 24" style="width: 10px; height: 10px; fill: #E10600; display: inline-block; vertical-align: middle; margin: 0 1px 0 2px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      <svg viewBox="0 0 24 24" class="app-footer__heart"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
       <span>of Formula 1.</span>
-      <span style="font-weight: 700; color: #bbbbbb; margin-left: 6px; text-transform: uppercase;">— Arin</span>
+      <span class="app-footer__signature">— Arin</span>
     </div>
   </div>
 </div>
