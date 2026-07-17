@@ -183,38 +183,51 @@ def _bar_html(label: str, pct: float, color: str) -> str:
 
 def get_team_logo_html(team: str, color: str) -> str:
     team_lower = team.lower()
-    
-    # Map team name to filename key
+
+    logo_keys = []
     if 'ferrari' in team_lower:
-        logo_key = 'ferrari'
+        logo_keys = ['ferrari']
     elif 'mercedes' in team_lower:
-        logo_key = 'mercedes'
+        logo_keys = ['mercedes']
     elif 'red bull' in team_lower:
-        logo_key = 'red_bull_racing'
+        logo_keys = ['red_bull_racing', 'red_bull']
     elif 'mclaren' in team_lower:
-        logo_key = 'mclaren'
+        logo_keys = ['mclaren']
     elif 'aston martin' in team_lower:
-        logo_key = 'aston_martin'
+        logo_keys = ['aston_martin']
     elif 'alpine' in team_lower:
-        logo_key = 'alpine'
+        logo_keys = ['alpine']
     elif 'williams' in team_lower:
-        logo_key = 'williams'
+        logo_keys = ['williams']
     elif 'haas' in team_lower:
-        logo_key = 'haas'
-    elif 'sauber' in team_lower or 'alfa romeo' in team_lower:
-        logo_key = 'sauber'
-    elif 'alphatauri' in team_lower or 'rb' in team_lower or 'bulls' in team_lower:
-        logo_key = 'rb'
+        logo_keys = ['haas']
+    elif 'kick sauber' in team_lower:
+        logo_keys = ['kick_sauber', 'sauber']
+    elif 'alfa romeo' in team_lower:
+        logo_keys = ['alfa_romeo', 'sauber']
+    elif 'sauber' in team_lower:
+        logo_keys = ['sauber', 'kick_sauber']
+    elif 'alphatauri' in team_lower:
+        logo_keys = ['alphatauri', 'rb']
+    elif 'racing bulls' in team_lower:
+        logo_keys = ['racing_bulls', 'rb']
+    elif team_lower.strip() == 'rb':
+        logo_keys = ['rb', 'racing_bulls']
+    elif 'cadillac' in team_lower:
+        logo_keys = ['cadillac']
+    elif 'audi' in team_lower:
+        logo_keys = ['audi']
     else:
-        logo_key = team_lower.replace(" ", "_")
+        logo_keys = [team_lower.replace(" ", "_")]
         
-    # Check paths in root or logos/ directory
-    paths = [
-        f"logos/{logo_key}.png",
-        f"logos/{logo_key}.jpg",
-        f"data/logos/{logo_key}.png",
-        f"{logo_key}.png"
-    ]
+    paths = []
+    for logo_key in logo_keys:
+        paths.extend([
+            f"logos/{logo_key}.png",
+            f"logos/{logo_key}.jpg",
+            f"data/logos/{logo_key}.png",
+            f"{logo_key}.png"
+        ])
     
     import base64
     for p in paths:
@@ -223,12 +236,15 @@ def get_team_logo_html(team: str, color: str) -> str:
                 with open(p, "rb") as f:
                     data = base64.b64encode(f.read()).decode()
                 ext = p.split(".")[-1]
-                return f'<img src="data:image/{ext};base64,{data}" style="height: 40px; max-width: 60px; object-fit: contain; display: block;" />'
+                return f"""
+                <div class="team-logo-slot team-logo-slot--image">
+                    <img src="data:image/{ext};base64,{data}" alt="{team} logo" />
+                </div>
+                """
             except Exception:
                 pass
                 
-    # Fallback to premium CSS/SVG monograms
-    return get_team_logo_svg(team, color)
+    return f'<div class="team-logo-slot team-logo-slot--fallback">{get_team_logo_svg(team, color)}</div>'
 
 def build_driver_card_html(
     pos: int,
@@ -314,6 +330,26 @@ def build_driver_card_html(
     <style>
         html, body {{ margin: 0; padding: 0; background: transparent; overflow: hidden; height: 100%; }}
         .card-container {{ box-sizing: border-box; }}
+        .team-logo-slot {{
+            width: 82px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 82px;
+        }}
+        .team-logo-slot--image img {{
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.38));
+        }}
+        .team-logo-slot--fallback svg {{
+            width: 46px;
+            height: 46px;
+            display: block;
+        }}
     </style>
     {body}
     """
