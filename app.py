@@ -144,8 +144,6 @@ st.markdown("""
 /* ── F1 SCROLL RACER ── */
 .scroll-racer {
     --car-h: 42px;
-    --scroll-racer-progress: 0.02;
-    --scroll-racer-y: 0px;
     position: fixed;
     top: 24px;
     right: 3px;
@@ -170,9 +168,12 @@ st.markdown("""
     bottom: 2px;
     left: 50%;
     width: 1px;
-    transform: translateX(-50%) scaleY(var(--scroll-racer-progress));
+    transform: translateX(-50%) scaleY(0.02);
     transform-origin: top;
     background: #E10600;
+    animation: scrollRacerProgress linear both;
+    animation-timeline: scroll(nearest);
+    animation-range: 0% 100%;
 }
 .scroll-racer__car {
     position: absolute;
@@ -180,12 +181,23 @@ st.markdown("""
     top: 0;
     width: 18px;
     height: var(--car-h);
-    transform: translate(-50%, var(--scroll-racer-y));
+    transform: translateX(-50%);
+    animation: scrollRacerDrive linear both;
+    animation-timeline: scroll(nearest);
+    animation-range: 0% 100%;
 }
 .scroll-racer__car svg {
     display: block;
     width: 100%;
     height: 100%;
+}
+@keyframes scrollRacerDrive {
+    from { top: 0; }
+    to { top: calc(100% - var(--car-h)); }
+}
+@keyframes scrollRacerProgress {
+    from { transform: translateX(-50%) scaleY(0.02); }
+    to { transform: translateX(-50%) scaleY(1); }
 }
 @media (max-width: 1100px), (prefers-reduced-motion: reduce) {
     .scroll-racer {
@@ -610,65 +622,6 @@ st.markdown("""
   </div>
 </div>
 """, unsafe_allow_html=True)
-
-components.html("""
-<script>
-(() => {
-  const appWindow = window.parent;
-  const appDocument = appWindow.document;
-  const cleanupKey = "__stratScrollRacerCleanup";
-
-  if (appWindow[cleanupKey]) appWindow[cleanupKey]();
-
-  const getScrollRoot = () => {
-    const candidates = [
-      appDocument.querySelector('[data-testid="stAppViewContainer"]'),
-      appDocument.scrollingElement,
-      appDocument.documentElement,
-      appDocument.body,
-    ].filter(Boolean);
-
-    return candidates.reduce((current, candidate) =>
-      (candidate.scrollHeight - candidate.clientHeight) > (current.scrollHeight - current.clientHeight)
-        ? candidate
-        : current
-    );
-  };
-
-  let animationFrame;
-  const updateRacer = () => {
-    animationFrame = undefined;
-    const racer = appDocument.querySelector('.scroll-racer');
-    const car = racer?.querySelector('.scroll-racer__car');
-    const scrollRoot = getScrollRoot();
-    if (!racer || !car || !scrollRoot) return;
-
-    const scrollRange = Math.max(scrollRoot.scrollHeight - scrollRoot.clientHeight, 0);
-    const scrollTop = scrollRoot.scrollTop || appWindow.scrollY || 0;
-    const progress = scrollRange ? Math.min(Math.max(scrollTop / scrollRange, 0), 1) : 0;
-    const travel = Math.max(racer.clientHeight - car.clientHeight, 0);
-
-    racer.style.setProperty('--scroll-racer-progress', String(Math.max(progress, 0.02)));
-    racer.style.setProperty('--scroll-racer-y', `${Math.round(progress * travel)}px`);
-  };
-
-  const requestUpdate = () => {
-    if (!animationFrame) animationFrame = appWindow.requestAnimationFrame(updateRacer);
-  };
-
-  appDocument.addEventListener('scroll', requestUpdate, true);
-  appWindow.addEventListener('resize', requestUpdate);
-  const observer = new appWindow.ResizeObserver(requestUpdate);
-  observer.observe(appDocument.documentElement);
-  appWindow[cleanupKey] = () => {
-    appDocument.removeEventListener('scroll', requestUpdate, true);
-    appWindow.removeEventListener('resize', requestUpdate);
-    observer.disconnect();
-  };
-  requestUpdate();
-})();
-</script>
-""", height=0, width=0)
 
 # ─────────────────────────────────────────
 # LOAD DATA + MODELS
