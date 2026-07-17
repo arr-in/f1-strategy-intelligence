@@ -34,17 +34,24 @@ st.set_page_config(
 # ─────────────────────────────────────────
 # LOGO
 # ─────────────────────────────────────────
-def get_logo():
-    for path in ['f1_logo.png', 'f1_logo.jpg', 'f1_logo.avif']:
+def get_image_data_uri(paths):
+    for path in paths:
         if os.path.exists(path):
             ext  = path.split('.')[-1]
-            mime = 'image/avif' if ext == 'avif' else f'image/{ext}'
+            mime = 'image/svg+xml' if ext == 'svg' else ('image/avif' if ext == 'avif' else f'image/{ext}')
             with open(path, 'rb') as f:
                 b64 = base64.b64encode(f.read()).decode()
             return f"data:{mime};base64,{b64}"
     return None
 
+def get_logo():
+    return get_image_data_uri(['f1_logo.png', 'f1_logo.jpg', 'f1_logo.avif'])
+
+def get_brand_logo():
+    return get_image_data_uri(['strat_header_logo.svg', 'strat_logo.png'])
+
 LOGO_SRC = get_logo()
+BRAND_LOGO_SRC = get_brand_logo()
 
 # ─────────────────────────────────────────
 # CONSTANTS
@@ -146,6 +153,29 @@ st.markdown("""
 }
 [data-testid="stSidebar"] > div {
     padding: 0 !important;
+}
+.sidebar-brand {
+    padding: 1.55rem 24px 1.1rem !important;
+    border-bottom: 1px solid #141414 !important;
+    margin-bottom: 15px !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0) 100%) !important;
+}
+.sidebar-brand-logo {
+    display: block !important;
+    width: min(212px, 100%) !important;
+    height: auto !important;
+    max-height: 82px !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+    filter: drop-shadow(0 8px 18px rgba(0,0,0,0.4)) !important;
+}
+.sidebar-brand-fallback {
+    font-family: 'Bebas Neue', sans-serif !important;
+    color: #fff !important;
+    font-size: 2.6rem !important;
+    font-style: italic !important;
+    font-weight: 900 !important;
+    line-height: 0.95 !important;
 }
 [data-testid="collapsedControl"],
 [data-testid="stSidebarCollapseButton"],
@@ -647,16 +677,14 @@ def load_qualy_speed_trace(year: int, race: str, d1: str, d2: str):
 # SIDEBAR
 # ─────────────────────────────────────────
 with st.sidebar:
-    # Premium typography logo for the sidebar header
-    st.markdown("""
-    <div style="padding: 1.8rem 24px 1.2rem 24px; font-family: 'Bebas Neue', sans-serif; border-bottom: 1px solid #141414; margin-bottom: 15px; background: linear-gradient(180deg, rgba(225,6,0,0.03) 0%, transparent 100%);">
-        <div style="display: flex; align-items: baseline; gap: 8px;">
-            <span style="font-size: 2.8rem; font-weight: 900; letter-spacing: 0.05em; color: #ffffff; font-style: italic; line-height: 0.9;">STRAT</span>
-            <span style="font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 900; background: #E10600; color: #ffffff; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.05em; font-style: normal; transform: translateY(-4px);">AI</span>
-        </div>
-        <div style="font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 800; color: #515462; letter-spacing: 0.35em; text-transform: uppercase; margin-top: 2px; line-height: 1;">
-            F1 ANALYTICS
-        </div>
+    brand_logo_html = (
+        f'<img src="{BRAND_LOGO_SRC}" alt="STRAT AI Powered F1 Intelligence" class="sidebar-brand-logo" />'
+        if BRAND_LOGO_SRC else
+        '<div class="sidebar-brand-fallback">STRAT</div>'
+    )
+    st.markdown(f"""
+    <div class="sidebar-brand">
+        {brand_logo_html}
     </div>
     """, unsafe_allow_html=True)
 
