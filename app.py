@@ -48,7 +48,7 @@ def get_logo():
     return get_image_data_uri(['f1_logo.png', 'f1_logo.jpg', 'f1_logo.avif'])
 
 def get_brand_logo():
-    return get_image_data_uri(['strat_header_logo.svg', 'strat_logo.png'])
+    return get_image_data_uri(['strat_header_logo.png', 'strat_logo.png'])
 
 LOGO_SRC = get_logo()
 BRAND_LOGO_SRC = get_brand_logo()
@@ -162,9 +162,9 @@ st.markdown("""
 }
 .sidebar-brand-logo {
     display: block !important;
-    width: min(212px, 100%) !important;
+    width: min(232px, 100%) !important;
     height: auto !important;
-    max-height: 82px !important;
+    max-height: 78px !important;
     object-fit: contain !important;
     object-position: left center !important;
     filter: drop-shadow(0 8px 18px rgba(0,0,0,0.4)) !important;
