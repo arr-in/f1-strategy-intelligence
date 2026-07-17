@@ -329,7 +329,15 @@ def build_driver_card_html(
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         html, body {{ margin: 0; padding: 0; background: transparent; overflow: hidden; height: 100%; }}
-        .card-container {{ box-sizing: border-box; }}
+        .card-container {{
+            box-sizing: border-box;
+            animation: card-enter 0.46s cubic-bezier(0.22, 1, 0.36, 1) both;
+            transition: transform 0.24s ease, box-shadow 0.24s ease;
+        }}
+        .card-container:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 16px 34px rgba(0,0,0,0.48) !important;
+        }}
         .team-logo-slot {{
             width: 82px;
             height: 58px;
@@ -344,11 +352,27 @@ def build_driver_card_html(
             object-fit: contain;
             display: block;
             filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.38));
+            transition: transform 0.24s ease, filter 0.24s ease;
+        }}
+        .card-container:hover .team-logo-slot--image img {{
+            transform: scale(1.035);
+            filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.48));
         }}
         .team-logo-slot--fallback svg {{
             width: 46px;
             height: 46px;
             display: block;
+        }}
+        @keyframes card-enter {{
+            from {{ opacity: 0; transform: translateY(10px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+        @media (prefers-reduced-motion: reduce) {{
+            *, *::before, *::after {{
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }}
         }}
     </style>
     {body}

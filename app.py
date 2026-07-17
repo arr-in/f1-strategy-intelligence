@@ -138,8 +138,26 @@ st.markdown("""
     max-width: 1480px !important;
 }
 
-/* smoother overall */
+/* ── MOTION SYSTEM ── */
 * { scroll-behavior: smooth; }
+@keyframes stratEnter {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+[data-testid="stMainBlockContainer"] [data-testid="stElementContainer"] {
+    animation: stratEnter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+[data-testid="stPlotlyChart"],
+[data-testid="stDataFrame"],
+[data-testid="stExpander"],
+[data-testid="stAlert"] {
+    transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+}
+[data-testid="stPlotlyChart"]:hover,
+[data-testid="stDataFrame"]:hover,
+[data-testid="stExpander"]:hover {
+    transform: translateY(-2px);
+}
 
 /* ── F1 SCROLL RACER ── */
 .scroll-racer {
@@ -238,12 +256,12 @@ st.markdown("""
     top: 0;
     bottom: 0;
     left: 280px;
-    width: 18px;
+    width: 12px;
     z-index: 1001;
     pointer-events: none;
     background-color: #0B0B0B;
     background-image: conic-gradient(#F5F5F5 25%, #0B0B0B 0 50%, #F5F5F5 0 75%, #0B0B0B 0);
-    background-size: 12px 12px;
+    background-size: 10px 10px;
     background-position: center top;
 }
 .sidebar-brand-fallback {
@@ -270,10 +288,12 @@ button[kind="headerNoPadding"],
     border-top: 2px solid #1e1e1e !important;
     border-radius: 3px !important;
     padding: 1rem 1.25rem !important;
-    transition: border-top-color 0.25s ease !important;
+    transition: transform 0.22s ease, border-color 0.22s ease, border-top-color 0.22s ease, box-shadow 0.22s ease !important;
 }
 [data-testid="metric-container"]:hover {
     border-top-color: #E8002D !important;
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.26);
 }
 [data-testid="metric-container"] label {
     color: #777 !important;
@@ -293,6 +313,15 @@ button[kind="headerNoPadding"],
     border: 1px solid #222 !important;
     border-radius: 3px !important;
     color: #cccccc !important;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+.stSelectbox > div > div:hover {
+    border-color: #393939 !important;
+    transform: translateY(-1px);
+}
+.stSelectbox > div > div:focus-within {
+    border-color: rgba(232, 0, 45, 0.78) !important;
+    box-shadow: 0 0 0 3px rgba(232, 0, 45, 0.10) !important;
 }
 .stSelectbox label, .stSlider label {
     color: #777 !important;
@@ -301,6 +330,14 @@ button[kind="headerNoPadding"],
     text-transform: uppercase !important;
 }
 .stSlider > div > div > div { background: #E8002D !important; }
+.stSlider [role="slider"] {
+    transition: box-shadow 0.18s ease, transform 0.18s ease !important;
+}
+.stSlider [role="slider"]:hover,
+.stSlider [role="slider"]:focus-visible {
+    transform: scale(1.13);
+    box-shadow: 0 0 0 5px rgba(232, 0, 45, 0.14) !important;
+}
 
 /* ── BUTTONS ── */
 .stButton > button {
@@ -370,6 +407,25 @@ button[kind="headerNoPadding"],
     background: rgba(225,6,0,0.07) !important;
 }
 
+/* ── TABS & EXPANDERS ── */
+[data-testid="stTabs"] [role="tab"] {
+    transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease !important;
+}
+[data-testid="stTabs"] [role="tab"]:hover {
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+[data-testid="stExpander"] {
+    border-color: #1b1b1b !important;
+}
+[data-testid="stExpander"] summary {
+    transition: color 0.2s ease, background-color 0.2s ease !important;
+}
+[data-testid="stExpander"]:hover summary {
+    color: #ffffff !important;
+    background: rgba(255,255,255,0.018) !important;
+}
+
 /* ── HIDE STREAMLIT CHROME ── */
 #MainMenu, footer { visibility: hidden; }
 header[data-testid="stHeader"] {
@@ -386,7 +442,7 @@ header[data-testid="stHeader"] {
 /* ── FIXED FOOTER (always at bottom) ── */
 .app-footer {
     position: fixed;
-    left: 298px;
+    left: 292px;
     right: 156px;
     bottom: 0;
     z-index: 999;
@@ -600,6 +656,14 @@ header[data-testid="stHeader"] {
 @keyframes stratFade {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
